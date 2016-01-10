@@ -60,6 +60,8 @@ class PatientQueryUtil {
     private static PatientSnapshot mutateSnapshot(PatientSnapshot snapshot, PatientEvent event) {
         if (event instanceof PatientCreated) {
             snapshot.name = event.name
+        } else if (event instanceof PatientNameChanged) {
+            snapshot.name = event.name
         } else {
             throw new IllegalArgumentException("This kind of event is not supported - ${event.class}")
         }
