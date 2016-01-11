@@ -14,7 +14,7 @@
                 <g:renderException exception="${request.getAttribute('javax.servlet.error.exception')}" />
             </g:elseif>
             <g:else>
-                <ul class="errors">
+                <ul class="errors list-unstyled">
                     <li>An error has occurred</li>
                     <li>Exception: ${exception}</li>
                     <li>Message: ${message}</li>
@@ -23,7 +23,7 @@
             </g:else>
         </g:if>
         <g:else>
-            <ul class="errors">
+            <ul class="errors list-unstyled">
                 <li>An error has occurred</li>
             </ul>
         </g:else>
