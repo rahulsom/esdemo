@@ -16,9 +16,9 @@ class PatientQueryUtilSpec extends Specification {
     def "Patient is created"() {
         when: "I create a patient"
         As('rahul') {
-            createPatient('123', '1.2.3.4', 'john')
+            createPatient '123', '1.2.3.4', 'john'
         }
-        def s1 = findPatient('123', '1.2.3.4')
+        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
 
         then: "I see the correct name"
         s1 != null
@@ -29,10 +29,10 @@ class PatientQueryUtilSpec extends Specification {
     def "Name is changed"() {
         when: "I create a patient"
         As('rahul') {
-            def p1 = createPatient('123', '1.2.3.4', 'john')
-            changeName(p1, 'mike')
+            def p1 = createPatient '123', '1.2.3.4', 'john'
+            changeName p1, 'mike'
         }
-        def s1 = findPatient('123', '1.2.3.4')
+        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
 
         then: "I see the correct new name"
         s1 != null

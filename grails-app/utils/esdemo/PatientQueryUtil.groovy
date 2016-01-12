@@ -15,7 +15,7 @@ class PatientQueryUtil {
     public static final Map LATEST = [sort: 'id', order: 'desc', offset: 0, max: 1]
     public static final Map INCREMENTAL = [sort: 'id', order: 'asc']
 
-    static PatientSnapshot findPatient(String identifier, String authority, Long lastEvent = Long.MAX_VALUE) {
+    static PatientSnapshot findPatient(String identifier, String authority, long lastEvent) {
         log.info "Identifier: $identifier, Authority: $authority"
 
         PatientAggregate aggregate = PatientAggregate.findByIdentifierAndAuthority(identifier, authority)
