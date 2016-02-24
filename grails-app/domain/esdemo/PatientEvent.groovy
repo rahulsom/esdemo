@@ -1,4 +1,7 @@
 package esdemo
+
+import groovy.json.JsonBuilder
+
 /**
  * An event in Event sourcing, is well, an event. It represents an atomic action that was performed on an aggregate.
  * Our version of events cares about when it was performed, and by who.
@@ -24,6 +27,9 @@ abstract class PatientEvent {
 
     static constraints = {
     }
+
+
+    abstract String getAudit()
 }
 
 /**
@@ -36,6 +42,11 @@ class PatientCreated extends PatientEvent {
 
     @Override
     String toString() { "${dateCreated}: ${createdBy} created $aggregate with name $name" }
+
+    @Override
+    String getAudit() {
+        new JsonBuilder([name: name]).toString()
+    }
 }
 
 /**
@@ -46,4 +57,9 @@ class PatientNameChanged extends PatientEvent {
 
     @Override
     String toString() { "${dateCreated}: ${createdBy} changed name on $aggregate to ${name}" }
+
+    @Override
+    String getAudit() {
+        new JsonBuilder([newName: name]).toString()
+    }
 }
