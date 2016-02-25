@@ -22,6 +22,9 @@
             .theme-showcase {
                 margin-top: 5em;
             }
+            tr.reverted {
+                background-color: #bbb;
+            }
         </style>
         <g:layoutHead/>
     </head>

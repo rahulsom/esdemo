@@ -1,13 +1,13 @@
 package esdemo
 
+import grails.compiler.GrailsCompileStatic
 import grails.test.mixin.integration.Integration
 import grails.transaction.Rollback
 import grails.validation.ValidationException
 import spock.lang.Specification
 
-import static esdemo.PatientCommandUtil.changeName
-import static esdemo.PatientCommandUtil.createPatient
-import static esdemo.UserUtil.As
+import static esdemo.PatientCommandUtil.*
+import static Util.As
 
 @Integration
 @Rollback
@@ -44,6 +44,18 @@ class PatientCommandUtilSpec extends Specification {
         then: "It gets saved"
         p1
         PatientEvent.count() == 2 + old(PatientEvent.count())
+
+    }
+
+    def "reverting change name of patient works"() {
+        when: "I create a patient and change its name"
+        def p1 = As('rahul') { createPatient '123', '1.2.3.4', 'john' }
+        def e = As('john') { changeName p1, 'mike' }
+        As('mike') { revertEvent p1, e }
+
+        then: "It gets saved"
+        p1
+        PatientEvent.count() == 3 + old(PatientEvent.count())
 
     }
 

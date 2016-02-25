@@ -2,10 +2,9 @@ package esdemo
 
 import grails.compiler.GrailsCompileStatic
 
-import static esdemo.PatientCommandUtil.changeName
-import static esdemo.PatientCommandUtil.createPatient
+import static esdemo.PatientCommandUtil.*
 import static esdemo.PatientQueryUtil.findPatient
-import static esdemo.UserUtil.As
+import static Util.As
 
 @GrailsCompileStatic
 class PatientController {
@@ -84,6 +83,32 @@ class PatientController {
         assert aggregate
 
         As(user) { changeName(aggregate, name) }
+        redirect action: 'show', params: [authority: authority, identifier: identifier]
+    }
+
+    /**
+     *
+     * @param authority
+     * @param identifier
+     * @param id
+     */
+    def revertEvent(String authority, String identifier, Long eventId) {
+        String user = request.getHeader('user') ?: session.getAttribute('user')
+        assert user
+
+        assert authority
+        assert identifier
+        def aggregate = PatientAggregate.findByAuthorityAndIdentifier(authority, identifier)
+
+        assert eventId
+        assert aggregate
+
+        def event = PatientEvent.findByAggregateAndId(aggregate, eventId)
+
+        assert event
+
+        As(user) { revertEvent(aggregate, event) }
+
         redirect action: 'show', params: [authority: authority, identifier: identifier]
     }
 

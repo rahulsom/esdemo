@@ -14,13 +14,17 @@ class PatientCommandUtil {
 
     static PatientAggregate createPatient(String identifier, String authority, String name) {
         new PatientAggregate(identifier: identifier, authority: authority).save().with {
-            new PatientCreated(aggregate: it, createdBy: UserUtil.user, name: name).save(failOnError: true)
+            new PatientCreated(aggregate: it, createdBy: Util.user, name: name, dateCreated: Util.time).save(failOnError: true)
             it
         }
     }
 
-    static void changeName(PatientAggregate self, String name) {
-        new PatientNameChanged(aggregate: self, createdBy: UserUtil.user, name: name).save()
+    static PatientNameChanged changeName(PatientAggregate self, String name) {
+        new PatientNameChanged(aggregate: self, createdBy: Util.user, name: name, dateCreated: Util.time).save()
+    }
+
+    static PatientEventReverted revertEvent(PatientAggregate self, PatientEvent event) {
+        new PatientEventReverted(aggregate: self, createdBy: Util.user, event: event).save()
     }
 
 }

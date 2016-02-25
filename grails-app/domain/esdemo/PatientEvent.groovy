@@ -28,6 +28,8 @@ abstract class PatientEvent {
     static constraints = {
     }
 
+    Long revertedBy
+    static transients = ['revertedBy']
 
     abstract String getAudit()
 }
@@ -60,6 +62,21 @@ class PatientNameChanged extends PatientEvent {
 
     @Override
     String getAudit() {
-        new JsonBuilder([newName: name]).toString()
+        new JsonBuilder([name: name]).toString()
+    }
+}
+
+/**
+ * Indicates an event has been reverted
+ */
+class PatientEventReverted extends PatientEvent {
+    PatientEvent event
+
+    @Override
+    String toString() { "${dateCreated}: ${createdBy} reverted $event on $aggregate" }
+
+    @Override
+    String getAudit() {
+        new JsonBuilder([eventId: event.id]).toString()
     }
 }

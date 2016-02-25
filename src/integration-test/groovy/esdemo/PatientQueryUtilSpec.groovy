@@ -6,8 +6,9 @@ import spock.lang.Specification
 
 import static esdemo.PatientCommandUtil.changeName
 import static esdemo.PatientCommandUtil.createPatient
+import static esdemo.PatientCommandUtil.revertEvent
 import static esdemo.PatientQueryUtil.findPatient
-import static esdemo.UserUtil.As
+import static Util.As
 
 @Integration
 @Rollback
@@ -38,6 +39,19 @@ class PatientQueryUtilSpec extends Specification {
         s1 != null
         s1 instanceof PatientSnapshot
         s1.name == 'mike'
+    }
+
+    def "Name change is reverted"() {
+        when: "I create a patient"
+        def p1 = As('rahul') { createPatient '123', '1.2.3.4', 'john' }
+        def e = As('rahul') { changeName p1, 'mike' }
+        def e1 = As('rahul') { revertEvent p1, e }
+        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+
+        then: "I see the correct new name"
+        s1 != null
+        s1 instanceof PatientSnapshot
+        s1.name == 'john'
     }
 
 }

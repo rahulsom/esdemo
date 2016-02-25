@@ -14,6 +14,17 @@
 
         <div class="tab-content">
             <div role="tabpanel" class="tab-pane active" id="values">
+                <br>
+                <g:if test="${params.version}">
+                    <div class="alert alert-warning">
+                        This is a snapshot in time. Click
+                        <g:link controller="patient" action="show"
+                                params="[identifier: params.identifier, authority: params.authority]">
+                            here
+                        </g:link>
+                        to see latest.
+                    </div>
+                </g:if>
                 <table class="table">
                     <g:each in="${patientSnapshot.properties.toSorted { a, b -> a.key <=> b.key }}" var="entry">
                         <tr>
@@ -33,24 +44,41 @@
             </div>
 
             <div role="tabpanel" class="tab-pane" id="audit">
+                <br>
                 <table class="table">
                     <thead>
                         <tr>
-                            <td>Id</td>
-                            <td>Time</td>
-                            <td>Person</td>
-                            <td>Type</td>
-                            <td>Data</td>
+                            <th>Time</th>
+                            <th>User</th>
+                            <th>Type</th>
+                            <th>Data</th>
+                            <th></th>
                         </tr>
                     </thead>
-                    <tbody>
                         <g:each in="${events}" var="event">
-                            <tr>
-                                <td>${event.id}</td>
-                                <td>${event.dateCreated}</td>
+                            <tr class="${event.revertedBy ? 'reverted' : '' }">
+                                <td>
+                                    <g:link controller="patient" action="show"
+                                            params="[identifier: params.identifier, authority: params.authority, version: event.id]">
+                                        ${event.dateCreated}
+                                    </g:link>
+                                </td>
                                 <td>${event.createdBy}</td>
                                 <td>${event.class.simpleName}</td>
-                                <td>${event.audit}</td>
+                                <td><code>${event.audit}</code></td>
+                                <td>
+                                    <g:if test="${event.class.simpleName != 'PatientCreated'}">
+                                        <g:if test="${event.revertedBy}">
+                                            Reverted by ${event.revertedBy}
+                                        </g:if>
+                                        <g:else>
+                                            <g:link controller="patient" action="revertEvent" class="btn btn-danger"
+                                                    params="[identifier: params.identifier, authority: params.authority, eventId: event.id]">
+                                                Revert
+                                            </g:link>
+                                        </g:else>
+                                    </g:if>
+                                </td>
                             </tr>
                         </g:each>
 
@@ -59,6 +87,7 @@
             </div>
 
             <div role="tabpanel" class="tab-pane" id="actions">
+                <br>
                 <g:form action="changeName" class="form-inline">
                     <g:hiddenField name="authority" value="${params.authority}"/>
                     <g:hiddenField name="identifier" value="${params.identifier}"/>
