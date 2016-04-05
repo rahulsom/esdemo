@@ -27,4 +27,12 @@ class PatientCommandUtil {
         new PatientEventReverted(aggregate: self, createdBy: Util.user, event: event).save()
     }
 
+    static PatientProcedurePerformed performProcedure(PatientAggregate self, String code) {
+        new PatientProcedurePerformed(aggregate: self, createdBy: Util.user, code: code).save()
+    }
+
+    static PatientProcedurePlanned planProcedure(PatientAggregate self, String code) {
+        new PatientProcedurePlanned(aggregate: self, createdBy: Util.user, code: code).save()
+    }
+
 }

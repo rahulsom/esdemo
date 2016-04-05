@@ -33,6 +33,7 @@ class PatientQueryUtil {
         log.info "  --> Aggregate: $aggregate"
         def sePair = getSnapshotAndEventsSince(aggregate, lastEvent)
         def retval = applyEvents(sePair.aValue, applyReverts(sePair.bValue.reverse()).reverse())
+        log.info "Done computing"
         log.info "  --> Computed: $retval"
 
         retval
@@ -77,7 +78,7 @@ class PatientQueryUtil {
     @TailRecursive
     private static PatientSnapshot applyEvents(
             PatientSnapshot snapshot, List<? extends PatientEvent> events) {
-        if (!events) {
+        if (events.empty) {
             return snapshot
         }
         def firstEvent = events.head()
@@ -90,6 +91,21 @@ class PatientQueryUtil {
                 return applyEvents(snapshot, remainingEvents)
             case PatientNameChanged:
                 snapshot.name = (firstEvent as PatientNameChanged).name
+                return applyEvents(snapshot, remainingEvents)
+            case PatientProcedurePlanned:
+                def planned = firstEvent as PatientProcedurePlanned
+                def match = snapshot.plannedProcedures?.find {it.code == planned.code}
+                if (!match) {
+                    snapshot.addToPlannedProcedures(code: planned.code)
+                }
+                return applyEvents(snapshot, remainingEvents)
+            case PatientProcedurePerformed:
+                def performed = firstEvent as PatientProcedurePerformed
+                def match = snapshot.plannedProcedures?.find {it.code == performed.code}
+                if (match) {
+                    snapshot.removeFromPlannedProcedures(match)
+                }
+                snapshot.addToPerformedProcedures(code: performed.code)
                 return applyEvents(snapshot, remainingEvents)
             default:
                 throw new IllegalArgumentException("This kind of event is not supported - ${firstEvent.class}")

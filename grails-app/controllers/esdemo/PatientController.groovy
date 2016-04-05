@@ -87,6 +87,56 @@ class PatientController {
     }
 
     /**
+     * <code>
+     * http -v get http://localhost:8080/patient/perform.json identifier==42 authority==1.2.3.4 code==FLUSHOT user:rahul
+     * </code>
+     *
+     * @param authority
+     * @param identifier
+     * @param code
+     * @return
+     */
+    def perform(String authority, String identifier, String code) {
+        String user = request.getHeader('user') ?: session.getAttribute('user')
+        assert user
+
+        assert authority
+        assert identifier
+        def aggregate = PatientAggregate.findByAuthorityAndIdentifier(authority, identifier)
+
+        assert code
+        assert aggregate
+
+        As(user) { performProcedure(aggregate, code) }
+        redirect action: 'show', params: [authority: authority, identifier: identifier]
+    }
+
+    /**
+     * <code>
+     * http -v get http://localhost:8080/patient/plan.json identifier==42 authority==1.2.3.4 code==FLUSHOT user:rahul
+     * </code>
+     *
+     * @param authority
+     * @param identifier
+     * @param code
+     * @return
+     */
+    def plan(String authority, String identifier, String code) {
+        String user = request.getHeader('user') ?: session.getAttribute('user')
+        assert user
+
+        assert authority
+        assert identifier
+        def aggregate = PatientAggregate.findByAuthorityAndIdentifier(authority, identifier)
+
+        assert code
+        assert aggregate
+
+        As(user) { planProcedure(aggregate, code) }
+        redirect action: 'show', params: [authority: authority, identifier: identifier]
+    }
+
+    /**
      *
      * @param authority
      * @param identifier

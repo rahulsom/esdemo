@@ -92,10 +92,30 @@
                     <g:hiddenField name="authority" value="${params.authority}"/>
                     <g:hiddenField name="identifier" value="${params.identifier}"/>
                     <div class="form-group">
-                        <label class="sr-only" for="name">Name</label>
-                        <input type="text" class="form-control" id="name" placeholder="Name" name="name">
+                        <label class="sr-only" for="changeNameName">Name</label>
+                        <input type="text" class="form-control" id="changeNameName" placeholder="Name" name="name">
                     </div>
                     <g:submitButton name="Change Name" class="btn btn-default"/>
+                </g:form>
+                <br>
+                <g:form action="plan" class="form-inline">
+                    <g:hiddenField name="authority" value="${params.authority}"/>
+                    <g:hiddenField name="identifier" value="${params.identifier}"/>
+                    <div class="form-group">
+                        <label class="sr-only" for="planCode">Code</label>
+                        <input type="text" class="form-control" id="planCode" placeholder="Code" name="code">
+                    </div>
+                    <g:submitButton name="Plan Procedure" class="btn btn-default"/>
+                </g:form>
+                <br>
+                <g:form action="perform" class="form-inline">
+                    <g:hiddenField name="authority" value="${params.authority}"/>
+                    <g:hiddenField name="identifier" value="${params.identifier}"/>
+                    <div class="form-group">
+                        <label class="sr-only" for="performCode">Code</label>
+                        <input type="text" class="form-control" id="performCode" placeholder="Code" name="code">
+                    </div>
+                    <g:submitButton name="Perform Procedure" class="btn btn-default"/>
                 </g:form>
             </div>
         </div>

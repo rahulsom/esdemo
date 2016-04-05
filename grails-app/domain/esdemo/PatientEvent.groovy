@@ -67,6 +67,36 @@ class PatientNameChanged extends PatientEvent {
 }
 
 /**
+ * Indicates the name changed for a patient
+ */
+class PatientProcedurePerformed extends PatientEvent {
+    String code
+
+    @Override
+    String toString() { "${dateCreated}: ${createdBy} performed ${code} on $aggregate" }
+
+    @Override
+    String getAudit() {
+        new JsonBuilder([code: code]).toString()
+    }
+}
+
+/**
+ * Indicates the name changed for a patient
+ */
+class PatientProcedurePlanned extends PatientEvent {
+    String code
+
+    @Override
+    String toString() { "${dateCreated}: ${createdBy} planned ${code} for $aggregate" }
+
+    @Override
+    String getAudit() {
+        new JsonBuilder([code: code]).toString()
+    }
+}
+
+/**
  * Indicates an event has been reverted
  */
 class PatientEventReverted extends PatientEvent {

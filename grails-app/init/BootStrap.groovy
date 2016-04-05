@@ -18,6 +18,10 @@ class BootStrap {
             As('daffy') { changeName(p1, 'sean') }
             def nce = As('goofy') { changeName(p1, 'tim') }
             As('goofy') { revertEvent(p1, nce)}
+            As('micky') { planProcedure(p1, 'APPENDECTOMY')}
+            As('micky') { planProcedure(p1, 'FLUSHOT')}
+            As('stevie') { performProcedure(p1, 'FLUSHOT')}
+            As('micky') { planProcedure(p1, 'FLUSHOT')}
         }
 
     }

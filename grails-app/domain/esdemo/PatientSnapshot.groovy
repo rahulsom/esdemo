@@ -1,6 +1,6 @@
 package esdemo
 
-import groovy.json.JsonBuilder
+import groovy.transform.ToString
 
 /**
  * A snapshot in Event Sourcing is the effective value of an aggregate at a point in time. This serves as a computed
@@ -9,6 +9,7 @@ import groovy.json.JsonBuilder
  *
  * @author Rahul Somasunderam
  */
+@ToString
 class PatientSnapshot {
 
     static belongsTo = [
@@ -22,8 +23,16 @@ class PatientSnapshot {
             'class', 'id', 'aggregate', 'aggregateId'
     ]
 
-    @Override
-    String toString() {
-        new JsonBuilder(this.properties.findAll { !HIDDEN_FIELDS.contains(it.key) })
-    }
+    static hasMany = [
+            plannedProcedures  : PlannedProcedure,
+            performedProcedures: PerformedProcedure,
+    ]
+}
+
+class PlannedProcedure {
+    String code
+}
+
+class PerformedProcedure {
+    String code
 }
