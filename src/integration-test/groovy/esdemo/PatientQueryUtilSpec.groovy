@@ -6,6 +6,8 @@ import spock.lang.Specification
 
 import static esdemo.PatientCommandUtil.changeName
 import static esdemo.PatientCommandUtil.createPatient
+import static esdemo.PatientCommandUtil.performProcedure
+import static esdemo.PatientCommandUtil.planProcedure
 import static esdemo.PatientCommandUtil.revertEvent
 import static esdemo.PatientQueryUtil.findPatient
 import static Util.As
@@ -52,6 +54,58 @@ class PatientQueryUtilSpec extends Specification {
         s1 != null
         s1 instanceof PatientSnapshot
         s1.name == 'john'
+    }
+
+    def "Plans can be seen"() {
+        when: "I create a patient"
+        def p1 = As('rahul') { createPatient '123', '1.2.3.4', 'john' }
+        As('rahul') {
+            planProcedure p1, 'FLUSHOT'
+            planProcedure p1, 'APPENDECTOMY'
+        }
+        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+
+        then: "I see the correct new name"
+        s1 != null
+        s1 instanceof PatientSnapshot
+        s1.name == 'john'
+        s1.performedProcedures.size() == 0
+        s1.plannedProcedures.size() == 2
+    }
+
+    def "Redundant plans can NOT be seen"() {
+        when: "I create a patient"
+        def p1 = As('rahul') { createPatient '123', '1.2.3.4', 'john' }
+        As('rahul') {
+            planProcedure p1, 'FLUSHOT'
+            planProcedure p1, 'APPENDECTOMY'
+            planProcedure p1, 'FLUSHOT'
+        }
+        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+
+        then: "I see the correct new name"
+        s1 != null
+        s1 instanceof PatientSnapshot
+        s1.name == 'john'
+        s1.performedProcedures.size() == 0
+        s1.plannedProcedures.size() == 2
+    }
+
+    def "Plan is performed"() {
+        when: "I create a patient"
+        def p1 = As('rahul') { createPatient '123', '1.2.3.4', 'john' }
+        As('rahul') {
+            planProcedure p1, 'FLUSHOT'
+            performProcedure p1, 'FLUSHOT'
+        }
+        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+
+        then: "I see the correct new name"
+        s1 != null
+        s1 instanceof PatientSnapshot
+        s1.name == 'john'
+        s1.performedProcedures.size() == 1
+        s1.plannedProcedures.size() == 0
     }
 
 }

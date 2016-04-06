@@ -149,7 +149,7 @@ class PatientQueryUtil {
                 PatientSnapshot.findAllByAggregate(aggregate, LATEST) :
                 PatientSnapshot.findAllByAggregateAndLastEventLessThan(aggregate, startWithEvent, LATEST)
 
-        PatientSnapshot lastSnapshot = (snapshots ?: [new PatientSnapshot()])[0] as PatientSnapshot
+        PatientSnapshot lastSnapshot = (snapshots ?: [createEmptySnapshot()])[0] as PatientSnapshot
 
         log.info "    --> Last Snapshot: ${lastSnapshot.id ? lastSnapshot : '<none>'}"
 
@@ -160,6 +160,14 @@ class PatientQueryUtil {
 
         lastSnapshot.aggregate = aggregate
         lastSnapshot
+    }
+
+    private static PatientSnapshot createEmptySnapshot() {
+        new PatientSnapshot().with {
+            it.performedProcedures = [] as Set
+            it.plannedProcedures = [] as Set
+            it
+        }
     }
 
 }
