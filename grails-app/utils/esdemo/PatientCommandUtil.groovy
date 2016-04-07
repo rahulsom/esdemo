@@ -13,10 +13,10 @@ import groovy.util.logging.Slf4j
 class PatientCommandUtil {
 
     static PatientAggregate createPatient(String identifier, String authority, String name) {
-        new PatientAggregate(identifier: identifier, authority: authority).save().with {
-            new PatientCreated(aggregate: it, createdBy: Util.user, name: name, dateCreated: Util.time).save(failOnError: true)
-            it
-        }
+        def aggregate = new PatientAggregate(identifier: identifier, authority: authority).save()
+        new PatientCreated(aggregate: aggregate, createdBy: Util.user, name: name,
+                dateCreated: Util.time).save(failOnError: true)
+        aggregate
     }
 
     static PatientNameChanged changeName(PatientAggregate self, String name) {
@@ -33,6 +33,10 @@ class PatientCommandUtil {
 
     static PatientProcedurePlanned planProcedure(PatientAggregate self, String code) {
         new PatientProcedurePlanned(aggregate: self, createdBy: Util.user, code: code, dateCreated: Util.time).save()
+    }
+
+    static PatientDeleted delete(PatientAggregate self, String reason) {
+        new PatientDeleted(aggregate: self, createdBy: Util.user, reason: reason, dateCreated: Util.time).save()
     }
 
 }

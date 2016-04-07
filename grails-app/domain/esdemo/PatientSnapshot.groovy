@@ -18,6 +18,7 @@ class PatientSnapshot {
 
     Long lastEvent = 0L
     String name
+    Boolean deleted = Boolean.FALSE
 
     public static final ArrayList<String> HIDDEN_FIELDS = [
             'class', 'id', 'aggregate', 'aggregateId'
@@ -49,14 +50,7 @@ class PlannedProcedure {
 
 
     @Override
-    public String toString() {
-        return """\
-            PlannedProcedure{
-                id=$id,
-                code='$code',
-                datePlanned='$datePlanned'
-            }""".stripIndent()
-    }
+    public String toString() { "PlannedProcedure{id=$id, code='$code', datePlanned='$datePlanned'}" }
 }
 
 class PerformedProcedure {
@@ -65,12 +59,5 @@ class PerformedProcedure {
 
 
     @Override
-    public String toString() {
-        return """\
-            PerformedProcedure{
-                id=$id,
-                datePerformed='$datePerformed',
-                code='$code'
-            }""".stripIndent()
-    }
+    public String toString() { return "PerformedProcedure{id=$id, datePerformed='$datePerformed', code='$code'}" }
 }

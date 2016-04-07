@@ -137,6 +137,30 @@ class PatientController {
     }
 
     /**
+     * <code>
+     * http -v get http://localhost:8080/patient/delete.json identifier==42 authority==1.2.3.4 reason=="My bad" user:rahul
+     * </code>
+     *
+     * @param authority
+     * @param identifier
+     * @param reason
+     * @return
+     */
+    def delete(String authority, String identifier, String reason) {
+        String user = request.getHeader('user') ?: session.getAttribute('user')
+        assert user
+
+        assert authority
+        assert identifier
+        def aggregate = PatientAggregate.findByAuthorityAndIdentifier(authority, identifier)
+
+        assert aggregate
+
+        As(user) { delete(aggregate, reason) }
+        redirect action: 'show', params: [authority: authority, identifier: identifier]
+    }
+
+    /**
      *
      * @param authority
      * @param identifier

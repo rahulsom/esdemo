@@ -32,6 +32,8 @@ class PatientQueryUtil {
         PatientAggregate aggregate = PatientAggregate.findByIdentifierAndAuthority(identifier, authority)
         log.info "  --> Aggregate: $aggregate"
         def sePair = getSnapshotAndEventsSince(aggregate, lastEvent)
+        log.info "SN: $sePair.aValue"
+        log.info "Ev: $sePair.bValue"
         def retval = applyEvents(sePair.aValue, applyReverts(sePair.bValue.reverse()).reverse())
         log.info "Done computing"
         log.info "  --> Computed: $retval"
@@ -78,7 +80,7 @@ class PatientQueryUtil {
     @TailRecursive
     private static PatientSnapshot applyEvents(
             PatientSnapshot snapshot, List<? extends PatientEvent> events) {
-        if (events.empty) {
+        if (events.empty || snapshot.deleted) {
             return snapshot
         }
         def firstEvent = events.head()
@@ -107,6 +109,9 @@ class PatientQueryUtil {
                 }
                 snapshot.addToPerformedProcedures(code: performed.code, datePerformed: performed.dateCreated)
                 return applyEvents(snapshot, remainingEvents)
+            case PatientDeleted:
+                snapshot.deleted = true
+                return snapshot
             default:
                 throw new IllegalArgumentException("This kind of event is not supported - ${firstEvent.class}")
         }
@@ -115,12 +120,12 @@ class PatientQueryUtil {
     /**
      * Given a last event, finds the latest snapshot older than that event
      * @param aggregate
-     * @param lastEvent
+     * @param lastEventInSnapshot
      * @return
      */
     private static Pair<PatientSnapshot, List<PatientEvent>> getSnapshotAndEventsSince(
-            PatientAggregate aggregate, long lastEvent) {
-        def lastSnapshot = getLatestSnapshot(aggregate, lastEvent)
+            PatientAggregate aggregate, long lastEventInSnapshot, long lastEvent = lastEventInSnapshot) {
+        def lastSnapshot = getLatestSnapshot(aggregate, lastEventInSnapshot)
 
         List<? extends PatientEvent> uncomputedEvents = PatientEvent.
                 findAllByAggregateAndIdGreaterThanAndIdLessThanEquals(
@@ -130,8 +135,10 @@ class PatientQueryUtil {
                 findAll { it instanceof PatientEventReverted } as List<PatientEventReverted>
 
         def oldestRevertedEvent = uncomputedReverts*.event*.id.min()
-        if (uncomputedReverts && oldestRevertedEvent < lastSnapshot.lastEvent) {
-            getSnapshotAndEventsSince(aggregate, oldestRevertedEvent)
+        log.info "Oldest reverted event: $oldestRevertedEvent"
+        if (uncomputedReverts && oldestRevertedEvent <= lastSnapshot.lastEvent) {
+            log.info "Uncomputed reverts exist: $uncomputedEvents"
+            getSnapshotAndEventsSince(aggregate, oldestRevertedEvent, lastEvent)
         } else {
             new Pair(lastSnapshot, uncomputedEvents)
         }

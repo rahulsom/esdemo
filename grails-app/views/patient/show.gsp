@@ -30,13 +30,19 @@
                         <tr>
                             <td>${entry.key}</td>
                             <td>
-                                <code><%
-                                    if (entry.value instanceof Number || entry.value instanceof String) {
-                                        out.println entry.value
-                                    } else {
-                                        out.println(entry.value as grails.converters.JSON)
+                                <%
+                                    if (entry.value instanceof Number || entry.value instanceof String || entry.value instanceof Boolean) {
+                                        %><code><%= entry.value%></code><%
+                                    } else if (entry.value instanceof List || entry.value instanceof Set) {
+                                        %><ul><%
+                                        entry.value.each {
+                                            %><li><code><%= it as grails.converters.JSON%></code></li><%
+                                        }
+                                        %></ul><%
+                                    } else if (entry.value instanceof List || entry.value instanceof Set) {
+                                        %><code><%= entry.value as grails.converters.JSON%></code><%
                                     }
-                                %></code>
+                                %>
                             </td>
                         </tr>
                     </g:each>
@@ -116,6 +122,16 @@
                         <input type="text" class="form-control" id="performCode" placeholder="Code" name="code">
                     </div>
                     <g:submitButton name="Perform Procedure" class="btn btn-default"/>
+                </g:form>
+                <br>
+                <g:form action="delete" class="form-inline">
+                    <g:hiddenField name="authority" value="${params.authority}"/>
+                    <g:hiddenField name="identifier" value="${params.identifier}"/>
+                    <div class="form-group">
+                        <label class="sr-only" for="deleteReason">Reason</label>
+                        <input type="text" class="form-control" id="deleteReason" placeholder="Reason" name="reason">
+                    </div>
+                    <g:submitButton name="Delete" class="btn btn-default"/>
                 </g:form>
             </div>
         </div>

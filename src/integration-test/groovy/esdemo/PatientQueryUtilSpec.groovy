@@ -108,4 +108,51 @@ class PatientQueryUtilSpec extends Specification {
         s1.plannedProcedures.size() == 0
     }
 
+    def "Snapshots can be reused"() {
+        when: "I create a patient"
+        def p1 = As('rahul') { createPatient '123', '1.2.3.4', 'john' }
+        As('rahul') {
+            planProcedure p1, 'FLUSHOT'
+            performProcedure p1, 'FLUSHOT'
+        }
+        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        s1.save()
+        As('mickey') {
+            planProcedure p1, 'FLUSHOT'
+        }
+        s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+
+        then: "I see the correct new name"
+        s1 != null
+        s1 instanceof PatientSnapshot
+        s1.name == 'john'
+        s1.performedProcedures.size() == 1
+        s1.plannedProcedures.size() == 1
+    }
+
+    def "Snapshots work with reverts"() {
+        when: "I create a patient"
+        def p1 = As('rahul') { createPatient '123', '1.2.3.4', 'john' }
+        def e1 = As('rahul') {
+            planProcedure p1, 'FLUSHOT'
+            performProcedure p1, 'FLUSHOT'
+        }
+        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        s1.save()
+        As('goofy') {
+            revertEvent p1, e1
+        }
+        As('mickey') {
+            planProcedure p1, 'FLUSHOT'
+        }
+        s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+
+        then: "I see the correct new name"
+        s1 != null
+        s1 instanceof PatientSnapshot
+        s1.name == 'john'
+        s1.performedProcedures.size() == 0
+        s1.plannedProcedures.size() == 1
+    }
+
 }

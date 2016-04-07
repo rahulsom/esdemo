@@ -42,13 +42,8 @@ abstract class PatientEvent {
 class PatientCreated extends PatientEvent {
     String name
 
-    @Override
-    String toString() { "${dateCreated}: ${createdBy} created $aggregate with name $name" }
-
-    @Override
-    String getAudit() {
-        new JsonBuilder([name: name]).toString()
-    }
+    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} created $aggregate with name $name" }
+    @Override String getAudit() { new JsonBuilder([name: name]).toString() }
 }
 
 /**
@@ -57,13 +52,8 @@ class PatientCreated extends PatientEvent {
 class PatientNameChanged extends PatientEvent {
     String name
 
-    @Override
-    String toString() { "${dateCreated}: ${createdBy} changed name on $aggregate to ${name}" }
-
-    @Override
-    String getAudit() {
-        new JsonBuilder([name: name]).toString()
-    }
+    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} changed name on $aggregate to ${name}" }
+    @Override String getAudit() { new JsonBuilder([name: name]).toString() }
 }
 
 /**
@@ -72,13 +62,8 @@ class PatientNameChanged extends PatientEvent {
 class PatientProcedurePerformed extends PatientEvent {
     String code
 
-    @Override
-    String toString() { "${dateCreated}: ${createdBy} performed ${code} on $aggregate" }
-
-    @Override
-    String getAudit() {
-        new JsonBuilder([code: code]).toString()
-    }
+    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} performed ${code} on $aggregate" }
+    @Override String getAudit() { new JsonBuilder([code: code]).toString() }
 }
 
 /**
@@ -87,13 +72,18 @@ class PatientProcedurePerformed extends PatientEvent {
 class PatientProcedurePlanned extends PatientEvent {
     String code
 
-    @Override
-    String toString() { "${dateCreated}: ${createdBy} planned ${code} for $aggregate" }
+    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} planned ${code} for $aggregate" }
+    @Override String getAudit() { new JsonBuilder([code: code]).toString() }
+}
 
-    @Override
-    String getAudit() {
-        new JsonBuilder([code: code]).toString()
-    }
+/**
+ * Indicates the name changed for a patient
+ */
+class PatientDeleted extends PatientEvent {
+    String reason
+
+    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} deleted $aggregate for reason '$reason'" }
+    @Override String getAudit() { new JsonBuilder([reason: reason]).toString() }
 }
 
 /**
@@ -102,11 +92,6 @@ class PatientProcedurePlanned extends PatientEvent {
 class PatientEventReverted extends PatientEvent {
     PatientEvent event
 
-    @Override
-    String toString() { "${dateCreated}: ${createdBy} reverted $event on $aggregate" }
-
-    @Override
-    String getAudit() {
-        new JsonBuilder([eventId: event.id]).toString()
-    }
+    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} reverted [$event]" }
+    @Override String getAudit() { new JsonBuilder([eventId: event.id]).toString() }
 }
