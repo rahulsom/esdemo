@@ -24,15 +24,15 @@ class PatientCommandUtil {
     }
 
     static PatientEventReverted revertEvent(PatientAggregate self, PatientEvent event) {
-        new PatientEventReverted(aggregate: self, createdBy: Util.user, event: event).save()
+        new PatientEventReverted(aggregate: self, createdBy: Util.user, event: event, dateCreated: Util.time).save()
     }
 
     static PatientProcedurePerformed performProcedure(PatientAggregate self, String code) {
-        new PatientProcedurePerformed(aggregate: self, createdBy: Util.user, code: code).save()
+        new PatientProcedurePerformed(aggregate: self, createdBy: Util.user, code: code, dateCreated: Util.time).save()
     }
 
     static PatientProcedurePlanned planProcedure(PatientAggregate self, String code) {
-        new PatientProcedurePlanned(aggregate: self, createdBy: Util.user, code: code).save()
+        new PatientProcedurePlanned(aggregate: self, createdBy: Util.user, code: code, dateCreated: Util.time).save()
     }
 
 }

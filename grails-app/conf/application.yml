@@ -84,6 +84,9 @@ dataSource:
     username: sa
     password:
 
+quartz:
+    autoStartup: true
+
 environments:
     development:
         dataSource:

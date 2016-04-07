@@ -27,12 +27,50 @@ class PatientSnapshot {
             plannedProcedures  : PlannedProcedure,
             performedProcedures: PerformedProcedure,
     ]
+
+
+    @Override
+    public String toString() {
+        return """\
+            PatientSnapshot{
+                id=$id,
+                performedProcedures=$performedProcedures,
+                plannedProcedures=$plannedProcedures,
+                aggregate=$aggregate,
+                lastEvent=$lastEvent,
+                name='$name'
+            }""".stripIndent()
+    }
 }
 
 class PlannedProcedure {
     String code
+    String datePlanned
+
+
+    @Override
+    public String toString() {
+        return """\
+            PlannedProcedure{
+                id=$id,
+                code='$code',
+                datePlanned='$datePlanned'
+            }""".stripIndent()
+    }
 }
 
 class PerformedProcedure {
     String code
+    String datePerformed
+
+
+    @Override
+    public String toString() {
+        return """\
+            PerformedProcedure{
+                id=$id,
+                datePerformed='$datePerformed',
+                code='$code'
+            }""".stripIndent()
+    }
 }

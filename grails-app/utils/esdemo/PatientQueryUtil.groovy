@@ -96,7 +96,7 @@ class PatientQueryUtil {
                 def planned = firstEvent as PatientProcedurePlanned
                 def match = snapshot.plannedProcedures?.find {it.code == planned.code}
                 if (!match) {
-                    snapshot.addToPlannedProcedures(code: planned.code)
+                    snapshot.addToPlannedProcedures(code: planned.code, datePlanned: planned.dateCreated)
                 }
                 return applyEvents(snapshot, remainingEvents)
             case PatientProcedurePerformed:
@@ -105,7 +105,7 @@ class PatientQueryUtil {
                 if (match) {
                     snapshot.removeFromPlannedProcedures(match)
                 }
-                snapshot.addToPerformedProcedures(code: performed.code)
+                snapshot.addToPerformedProcedures(code: performed.code, datePerformed: performed.dateCreated)
                 return applyEvents(snapshot, remainingEvents)
             default:
                 throw new IllegalArgumentException("This kind of event is not supported - ${firstEvent.class}")
@@ -123,7 +123,8 @@ class PatientQueryUtil {
         def lastSnapshot = getLatestSnapshot(aggregate, lastEvent)
 
         List<? extends PatientEvent> uncomputedEvents = PatientEvent.
-                findAllByAggregateAndIdBetween(aggregate, lastSnapshot?.lastEvent ?: 0L, lastEvent, INCREMENTAL)
+                findAllByAggregateAndIdGreaterThanAndIdLessThanEquals(
+                        aggregate, lastSnapshot?.lastEvent ?: 0L, lastEvent, INCREMENTAL)
 
         def uncomputedReverts = uncomputedEvents.
                 findAll { it instanceof PatientEventReverted } as List<PatientEventReverted>
