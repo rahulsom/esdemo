@@ -11,9 +11,10 @@
         a .red {
             color: red;
         }
-            span.gold {
-                color: goldenrod;
-            }
+
+        span.gold {
+            color: goldenrod;
+        }
         </style>
     </head>
 
@@ -25,7 +26,7 @@
                         params="[identifier: params.identifier, authority: params.authority]">
                     here
                 </g:link>
-                to see latest.
+                to see latest. Also reverts and actions are unavailable when viewing a snapshot.
             </div>
         </g:if>
         <ul class="nav nav-tabs">
@@ -83,7 +84,8 @@
                                 <td>
                                     <g:link controller="patient" action="show"
                                             params="[identifier: params.identifier, authority: params.authority, version: event.id]">
-                                        <g:formatDate format="yyyy-MM-dd HH:mm:ss,SSS" date="${event.dateCreated}"></g:formatDate>
+                                        <g:formatDate format="yyyy-MM-dd HH:mm:ss,SSS"
+                                                      date="${event.dateCreated}"></g:formatDate>
                                     </g:link>
                                 </td>
                                 <td>${event.createdBy}</td>
