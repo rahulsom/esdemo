@@ -7,6 +7,13 @@
         tr.snapshot {
             background-color: #006dba;
         }
+
+        a .red {
+            color: red;
+        }
+            span.gold {
+                color: goldenrod;
+            }
         </style>
     </head>
 
@@ -67,20 +74,16 @@
                             <th>Type</th>
                             <th>Data</th>
                             <th></th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         <g:each in="${events}" var="event">
-                            <g:if test="${snapshotted.contains(event.id)}">
-                                <tr class="snapshot">
-                                    <td colspan="5">&nbsp;</td>
-                                </tr>
-                            </g:if>
                             <tr class="${event.revertedBy ? 'reverted' : ''}">
                                 <td>
                                     <g:link controller="patient" action="show"
                                             params="[identifier: params.identifier, authority: params.authority, version: event.id]">
-                                        ${event.dateCreated}
+                                        <g:formatDate format="yyyy-MM-dd HH:mm:ss,SSS" date="${event.dateCreated}"></g:formatDate>
                                     </g:link>
                                 </td>
                                 <td>${event.createdBy}</td>
@@ -89,17 +92,22 @@
                                 <td>
                                     <g:if test="${event.class.simpleName != 'PatientCreated'}">
                                         <g:if test="${event.revertedBy}">
-                                            Reverted by ${event.revertedBy}
+                                            <span class="glyphicon glyphicon-erase red"></span> by ${event.revertedBy}
                                         </g:if>
                                         <g:else>
                                             <g:if test="${!params.version}">
-                                                <g:link controller="patient" action="revertEvent" class="btn btn-danger"
+                                                <g:link controller="patient" action="revertEvent"
                                                         params="[identifier: params.identifier,
-                                                                 authority: params.authority, eventId   : event.id]">
-                                                    Revert
+                                                                 authority : params.authority, eventId: event.id]">
+                                                    <span class="glyphicon glyphicon-erase red"></span>
                                                 </g:link>
                                             </g:if>
                                         </g:else>
+                                    </g:if>
+                                </td>
+                                <td>
+                                    <g:if test="${snapshotted.contains(event.id)}">
+                                        <span class="glyphicon glyphicon-star gold"></span>
                                     </g:if>
                                 </td>
                             </tr>

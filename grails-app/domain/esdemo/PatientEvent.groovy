@@ -93,5 +93,5 @@ class PatientEventReverted extends PatientEvent {
     PatientEvent event
 
     @Override String toString() { "<$id> ${dateCreated}: ${createdBy} reverted [$event]" }
-    @Override String getAudit() { new JsonBuilder([eventId: event.id]).toString() }
+    @Override String getAudit() { new JsonBuilder([eventId: event.id, id: id]).toString() }
 }
