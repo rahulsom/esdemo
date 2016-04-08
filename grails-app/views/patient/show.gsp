@@ -45,19 +45,17 @@
                         <tr>
                             <td>${entry.key}</td>
                             <td>
-                                <%
-                                    if (entry.value instanceof Number || entry.value instanceof String || entry.value instanceof Boolean) {
-                                %><code><%=entry.value%></code><%
-                                } else if (entry.value instanceof List || entry.value instanceof Set) {
-                            %><ul><%
-                                    entry.value.each {
-                            %><li><code><%=it as grails.converters.JSON%></code></li><%
-                                    }
-                            %></ul><%
-                                } else if (entry.value instanceof List || entry.value instanceof Set) {
-                            %><code><%=entry.value as grails.converters.JSON%></code><%
-                                }
-                            %>
+                                <% if (entry.value instanceof Number || entry.value instanceof String || entry.value instanceof Boolean) { %>
+                                    <code><%=entry.value%></code>
+                                <% } else if (entry.value instanceof List || entry.value instanceof Set) { %>
+                                <ul>
+                                    <% entry.value.each { %>
+                                        <li><code><%=it as grails.converters.JSON%></code></li>
+                                    <% } %>
+                                </ul>
+                                <% } else { %>
+                                    <code><%=entry.value as grails.converters.JSON%></code>
+                                <% } %>
                             </td>
                         </tr>
                     </g:each>
