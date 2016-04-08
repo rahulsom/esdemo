@@ -85,7 +85,7 @@ class PatientQueryUtil {
         }
         def firstEvent = events.head()
         def remainingEvents = events.tail()
-        snapshot.lastEvent = firstEvent.id
+        // snapshot.lastEvent = firstEvent.id
         log.debug "    --> Event: $firstEvent"
         switch (firstEvent) {
             case PatientCreated:
@@ -140,12 +140,16 @@ class PatientQueryUtil {
             log.info "Uncomputed reverts exist: $uncomputedEvents"
             getSnapshotAndEventsSince(aggregate, oldestRevertedEvent, lastEvent)
         } else {
+            log.info "Event Ids in pair: ${uncomputedEvents*.id}"
+            if (uncomputedEvents) {
+                lastSnapshot.lastEvent = uncomputedEvents*.id.max()
+            }
             new Pair(lastSnapshot, uncomputedEvents)
         }
     }
 
     /**
-     * Finds the latest snapshot that is older than event
+     * Finds the latest snapshot that is older than event. The snapshot returned is detached.
      *
      * @param aggregate
      * @param startWithEvent

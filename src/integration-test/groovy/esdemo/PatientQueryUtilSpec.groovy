@@ -2,6 +2,7 @@ package esdemo
 
 import grails.test.mixin.integration.Integration
 import grails.transaction.Rollback
+import groovy.util.logging.Slf4j
 import spock.lang.Specification
 
 import static esdemo.PatientCommandUtil.changeName
@@ -14,6 +15,7 @@ import static Util.As
 
 @Integration
 @Rollback
+@Slf4j
 class PatientQueryUtilSpec extends Specification {
 
     def "Patient is created"() {
@@ -139,11 +141,12 @@ class PatientQueryUtilSpec extends Specification {
         }
         def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
         s1.save()
-        As('goofy') {
-            revertEvent p1, e1
-        }
+        log.info "Snapshot 1 saved"
         As('mickey') {
             planProcedure p1, 'FLUSHOT'
+        }
+        def lastEvent = As('goofy') {
+            revertEvent p1, e1
         }
         s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
 
@@ -153,6 +156,17 @@ class PatientQueryUtilSpec extends Specification {
         s1.name == 'john'
         s1.performedProcedures.size() == 0
         s1.plannedProcedures.size() == 1
+
+        when: "I snapshot again"
+        log.info "Computing Snapshot 2"
+        def s2 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        s2.save()
+        log.info "Snapshot 2 saved"
+
+        s2 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+
+        then: "The snapshot should have the correct last event"
+        s2.lastEvent == lastEvent.id
     }
 
 }
