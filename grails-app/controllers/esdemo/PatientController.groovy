@@ -9,6 +9,8 @@ import static Util.As
 @GrailsCompileStatic
 class PatientController {
 
+    public static final LinkedHashMap<String, String> REVERSE_ORDER = [sort: 'id', order: 'desc']
+
     /**
      * <code>
      * http -v get http://localhost:8080/patient/index.json
@@ -33,9 +35,18 @@ class PatientController {
         assert identifier
         assert authority
 
-        def patientSnapshot = findPatient(identifier, authority, version?.longValue() ?: Long.MAX_VALUE)
-        def events = PatientEvent.findAllByAggregate(patientSnapshot.aggregate, [sort: 'id', order: 'desc']) as List<? extends PatientEvent>
-        def snapshots = PatientSnapshot.findAllByAggregate(patientSnapshot.aggregate, [sort: 'id', order: 'desc']) as List<PatientSnapshot>
+
+        def lastVersion = version?.longValue() ?: Long.MAX_VALUE
+        def patientSnapshot = findPatient(identifier, authority, lastVersion)
+        def aggregate = patientSnapshot.aggregate
+
+        def events = PatientEvent.findAllByAggregateAndIdLessThanEquals(aggregate, lastVersion, REVERSE_ORDER) as List<? extends PatientEvent>
+        events.each { event ->
+            if (event instanceof PatientEventReverted && event.revertedBy == null) {
+                (event as PatientEventReverted).event.revertedBy = event.id
+            }
+        }
+        def snapshots = PatientSnapshot.findAllByAggregateAndLastEventLessThanEquals(aggregate, lastVersion, REVERSE_ORDER) as List<PatientSnapshot>
         def snapshottedEvents = snapshots.collect { it.lastEvent }
         respond patientSnapshot, model: [events: events, snapshotted: snapshottedEvents]
     }

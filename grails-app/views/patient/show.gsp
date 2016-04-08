@@ -4,32 +4,34 @@
         <title>Patient</title>
         <meta name="layout" content="main"/>
         <style>
-            tr.snapshot {
-                background-color: #006dba;
-            }
+        tr.snapshot {
+            background-color: #006dba;
+        }
         </style>
     </head>
 
     <body>
+        <g:if test="${params.version}">
+            <div class="alert alert-warning">
+                This is a snapshot in time. Click
+                <g:link controller="patient" action="show"
+                        params="[identifier: params.identifier, authority: params.authority]">
+                    here
+                </g:link>
+                to see latest.
+            </div>
+        </g:if>
         <ul class="nav nav-tabs">
             <li role="presentation" class="active"><a href="#values">Values</a></li>
             <li role="presentation"><a href="#audit">Audit</a></li>
-            <li role="presentation"><a href="#actions">Actions</a></li>
+            <g:if test="${!params.version}">
+                <li role="presentation"><a href="#actions">Actions</a></li>
+            </g:if>
         </ul>
 
         <div class="tab-content">
             <div role="tabpanel" class="tab-pane active" id="values">
                 <br>
-                <g:if test="${params.version}">
-                    <div class="alert alert-warning">
-                        This is a snapshot in time. Click
-                        <g:link controller="patient" action="show"
-                                params="[identifier: params.identifier, authority: params.authority]">
-                            here
-                        </g:link>
-                        to see latest.
-                    </div>
-                </g:if>
                 <table class="table">
                     <g:each in="${patientSnapshot.properties.toSorted { a, b -> a.key <=> b.key }}" var="entry">
                         <tr>
@@ -37,17 +39,17 @@
                             <td>
                                 <%
                                     if (entry.value instanceof Number || entry.value instanceof String || entry.value instanceof Boolean) {
-                                        %><code><%= entry.value%></code><%
-                                    } else if (entry.value instanceof List || entry.value instanceof Set) {
-                                        %><ul><%
-                                        entry.value.each {
-                                            %><li><code><%= it as grails.converters.JSON%></code></li><%
-                                        }
-                                        %></ul><%
-                                    } else if (entry.value instanceof List || entry.value instanceof Set) {
-                                        %><code><%= entry.value as grails.converters.JSON%></code><%
+                                %><code><%=entry.value%></code><%
+                                } else if (entry.value instanceof List || entry.value instanceof Set) {
+                            %><ul><%
+                                    entry.value.each {
+                            %><li><code><%=it as grails.converters.JSON%></code></li><%
                                     }
-                                %>
+                            %></ul><%
+                                } else if (entry.value instanceof List || entry.value instanceof Set) {
+                            %><code><%=entry.value as grails.converters.JSON%></code><%
+                                }
+                            %>
                             </td>
                         </tr>
                     </g:each>
@@ -74,7 +76,7 @@
                                     <td colspan="5">&nbsp;</td>
                                 </tr>
                             </g:if>
-                            <tr class="${event.revertedBy ? 'reverted' : '' }">
+                            <tr class="${event.revertedBy ? 'reverted' : ''}">
                                 <td>
                                     <g:link controller="patient" action="show"
                                             params="[identifier: params.identifier, authority: params.authority, version: event.id]">
@@ -90,10 +92,13 @@
                                             Reverted by ${event.revertedBy}
                                         </g:if>
                                         <g:else>
-                                            <g:link controller="patient" action="revertEvent" class="btn btn-danger"
-                                                    params="[identifier: params.identifier, authority: params.authority, eventId: event.id]">
-                                                Revert
-                                            </g:link>
+                                            <g:if test="${!params.version}">
+                                                <g:link controller="patient" action="revertEvent" class="btn btn-danger"
+                                                        params="[identifier: params.identifier,
+                                                                 authority: params.authority, eventId   : event.id]">
+                                                    Revert
+                                                </g:link>
+                                            </g:if>
                                         </g:else>
                                     </g:if>
                                 </td>
