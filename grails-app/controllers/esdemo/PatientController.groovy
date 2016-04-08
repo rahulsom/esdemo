@@ -34,8 +34,10 @@ class PatientController {
         assert authority
 
         def patientSnapshot = findPatient(identifier, authority, version?.longValue() ?: Long.MAX_VALUE)
-        def events = PatientEvent.findAllByAggregate(patientSnapshot.aggregate, [sort: 'id', order: 'desc'])
-        respond patientSnapshot, model: [events: events]
+        def events = PatientEvent.findAllByAggregate(patientSnapshot.aggregate, [sort: 'id', order: 'desc']) as List<? extends PatientEvent>
+        def snapshots = PatientSnapshot.findAllByAggregate(patientSnapshot.aggregate, [sort: 'id', order: 'desc']) as List<PatientSnapshot>
+        def snapshottedEvents = snapshots.collect { it.lastEvent }
+        respond patientSnapshot, model: [events: events, snapshotted: snapshottedEvents]
     }
 
     /**

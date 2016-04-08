@@ -3,6 +3,11 @@
     <head>
         <title>Patient</title>
         <meta name="layout" content="main"/>
+        <style>
+            tr.snapshot {
+                background-color: #006dba;
+            }
+        </style>
     </head>
 
     <body>
@@ -51,6 +56,7 @@
 
             <div role="tabpanel" class="tab-pane" id="audit">
                 <br>
+                <!-- ${snapshotted} -->
                 <table class="table">
                     <thead>
                         <tr>
@@ -61,7 +67,13 @@
                             <th></th>
                         </tr>
                     </thead>
+                    <tbody>
                         <g:each in="${events}" var="event">
+                            <g:if test="${snapshotted.contains(event.id)}">
+                                <tr class="snapshot">
+                                    <td colspan="5">&nbsp;</td>
+                                </tr>
+                            </g:if>
                             <tr class="${event.revertedBy ? 'reverted' : '' }">
                                 <td>
                                     <g:link controller="patient" action="show"
