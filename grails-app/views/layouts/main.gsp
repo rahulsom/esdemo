@@ -22,10 +22,17 @@
             .theme-showcase {
                 margin-top: 5em;
             }
-            tr.reverted {
-                background-color: #bbb;
+            tr td code {
+                background-color: transparent;
             }
         </style>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+        <!-- Latest compiled and minified JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+                integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
+                crossorigin="anonymous"></script>
+
         <g:layoutHead/>
     </head>
 
@@ -75,16 +82,5 @@
 
         <div id="spinner" class="spinner" style="display:none;"><g:message code="spinner.alt"
                                                                            default="Loading&hellip;"/></div>
-
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-        <!-- Latest compiled and minified JavaScript -->
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
-                integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
-                crossorigin="anonymous"></script>
-
-        <script>$('.nav-tabs a').click(function (e) {
-            e.preventDefault();
-            $(this).tab('show');
-        })</script>
     </body>
 </html>

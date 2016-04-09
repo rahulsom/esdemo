@@ -4,6 +4,14 @@
         <title>Patient</title>
         <meta name="layout" content="main"/>
         <style>
+        tr.reverted td {
+            color: #bbb;
+        }
+
+        tr.reverted td code {
+            color: #bbb;
+        }
+
         tr.snapshot {
             background-color: #006dba;
         }
@@ -30,10 +38,10 @@
             </div>
         </g:if>
         <ul class="nav nav-tabs">
-            <li role="presentation" class="active"><a href="#values">Values</a></li>
-            <li role="presentation"><a href="#audit">Audit</a></li>
+            <li role="presentation" class="active"><a href="#values" data-toggle="tab">Values</a></li>
+            <li role="presentation"><a href="#audit" data-toggle="tab">Audit</a></li>
             <g:if test="${!params.version}">
-                <li role="presentation"><a href="#actions">Actions</a></li>
+                <li role="presentation"><a href="#actions" data-toggle="tab">Actions</a></li>
             </g:if>
         </ul>
 
@@ -46,15 +54,15 @@
                             <td>${entry.key}</td>
                             <td>
                                 <% if (entry.value instanceof Number || entry.value instanceof String || entry.value instanceof Boolean) { %>
-                                    <code><%=entry.value%></code>
+                                <code><%=entry.value%></code>
                                 <% } else if (entry.value instanceof List || entry.value instanceof Set) { %>
                                 <ul>
                                     <% entry.value.each { %>
-                                        <li><code><%=it as grails.converters.JSON%></code></li>
+                                    <li><code><%=it as grails.converters.JSON%></code></li>
                                     <% } %>
                                 </ul>
                                 <% } else { %>
-                                    <code><%=entry.value as grails.converters.JSON%></code>
+                                <code><%=entry.value as grails.converters.JSON%></code>
                                 <% } %>
                             </td>
                         </tr>
@@ -161,5 +169,27 @@
             </div>
         </div>
 
+        <script>
+
+            $(function () {
+                $('.nav-tabs a').click(function (e) {
+                    e.preventDefault();
+                    $(this).tab('show');
+                });
+
+                // for bootstrap 3 use 'shown.bs.tab', for bootstrap 2 use 'shown' in the next line
+                $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                    console.log("shown.bs.tab");
+                    // save the latest tab; use cookies if you like 'em better:
+                    localStorage.setItem('lastTab', $(this).attr('href'));
+                });
+
+                // go to the latest tab, if it exists:
+                var lastTab = localStorage.getItem('lastTab');
+                if (lastTab) {
+                    $('[href="' + lastTab + '"]').tab('show');
+                }
+            });
+        </script>
     </body>
 </html>
