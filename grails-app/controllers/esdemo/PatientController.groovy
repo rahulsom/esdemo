@@ -40,14 +40,21 @@ class PatientController {
         def patientSnapshot = findPatient(identifier, authority, lastVersion)
         def aggregate = patientSnapshot.aggregate
 
-        def events = PatientEvent.findAllByAggregateAndIdLessThanEquals(aggregate, lastVersion, REVERSE_ORDER) as List<? extends PatientEvent>
+        def events = PatientEvent.findAllByAggregateAndIdLessThanEquals(
+                aggregate, lastVersion, REVERSE_ORDER) as List<? extends PatientEvent>
         events.each { event ->
             if (event instanceof PatientEventReverted && event.revertedBy == null) {
                 (event as PatientEventReverted).event.revertedBy = event.id
             }
         }
-        def snapshots = PatientSnapshot.findAllByAggregateAndLastEventLessThanEquals(aggregate, lastVersion, REVERSE_ORDER) as List<PatientSnapshot>
+        def snapshots = PatientSnapshot.findAllByAggregateAndLastEventLessThanEquals(
+                aggregate, lastVersion, REVERSE_ORDER) as List<PatientSnapshot>
         def snapshottedEvents = snapshots.collect { it.lastEvent }
+
+        def deprecator = patientSnapshot.deprecatedBy
+        if (deprecator) {
+            redirect(action: 'show', params: [identifier: deprecator.identifier, authority: deprecator.authority])
+        }
         respond patientSnapshot, model: [events: events, snapshotted: snapshottedEvents]
     }
 
@@ -194,7 +201,7 @@ class PatientController {
 
         assert event
 
-        As(user) { revertEvent(aggregate, event) }
+        As(user) { revertEvent(event) }
 
         redirect action: 'show', params: [authority: authority, identifier: identifier]
     }

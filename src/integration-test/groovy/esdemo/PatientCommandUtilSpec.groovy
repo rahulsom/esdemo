@@ -51,12 +51,39 @@ class PatientCommandUtilSpec extends Specification {
         when: "I create a patient and change its name"
         def p1 = As('rahul') { createPatient '123', '1.2.3.4', 'john' }
         def e = As('john') { changeName p1, 'mike' }
-        As('mike') { revertEvent p1, e }
+        As('mike') { revertEvent e }
 
         then: "It gets saved"
         p1
         PatientEvent.count() == 3 + old(PatientEvent.count())
 
+    }
+
+    def "Merge works"() {
+        when: "I create a patient"
+        def p1 = As('rahul') { createPatient '123', '1.2.3.4', 'john' }
+        As('rahul') {
+            planProcedure p1, 'FLUSHOT'
+            performProcedure p1, 'FLUSHOT'
+        }
+
+        and: "Create another patient"
+        def p2 = As('rahul') { createPatient '42', '1.2.3.4', 'John' }
+        As('rahul') {
+            planProcedure p1, 'APPENDECTOMY'
+            performProcedure p1, 'FLUSHOT'
+        }
+
+        and: "I merge"
+        def m1 = As('rahul') {
+            merge(p1, p2)
+        }
+
+        then: "Merge should be valid"
+        m1 != null
+        m1.converse != null
+
+        PatientEvent.count() == 8
     }
 
 }

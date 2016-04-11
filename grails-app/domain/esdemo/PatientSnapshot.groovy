@@ -20,6 +20,8 @@ class PatientSnapshot {
     String name
     Boolean deleted = Boolean.FALSE
 
+    PatientAggregate deprecatedBy
+
     public static final ArrayList<String> HIDDEN_FIELDS = [
             'class', 'id', 'aggregate', 'aggregateId'
     ]
@@ -27,8 +29,12 @@ class PatientSnapshot {
     static hasMany = [
             plannedProcedures  : PlannedProcedure,
             performedProcedures: PerformedProcedure,
+            deprecates         : DeprecatedPatient
     ]
 
+    static constraints = {
+        deprecatedBy nullable: true
+    }
 
     @Override
     public String toString() {
@@ -37,6 +43,7 @@ class PatientSnapshot {
                 id=$id,
                 performedProcedures=$performedProcedures,
                 plannedProcedures=$plannedProcedures,
+                otherIds=$deprecates,
                 aggregate=$aggregate,
                 lastEvent=$lastEvent,
                 name='$name'
@@ -60,4 +67,12 @@ class PerformedProcedure {
 
     @Override
     public String toString() { return "PerformedProcedure{id=$id, datePerformed='$datePerformed', code='$code'}" }
+}
+
+class DeprecatedPatient {
+    String identifier
+    String authority
+
+    @Override
+    String toString() { "DeprecatedPatient#${id} - $identifier@$authority" }
 }

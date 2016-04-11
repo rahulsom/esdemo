@@ -28,17 +28,28 @@ class PatientQueryUtil {
      */
     static PatientSnapshot findPatient(String identifier, String authority, long lastEvent) {
         log.info "Identifier: $identifier, Authority: $authority"
-
         PatientAggregate aggregate = PatientAggregate.findByIdentifierAndAuthority(identifier, authority)
         log.info "  --> Aggregate: $aggregate"
-        def sePair = getSnapshotAndEventsSince(aggregate, lastEvent)
-        log.info "SN: $sePair.aValue"
-        log.info "Ev: $sePair.bValue"
-        def retval = applyEvents(sePair.aValue, applyReverts(sePair.bValue.reverse()).reverse())
-        log.info "Done computing"
-        log.info "  --> Computed: $retval"
+        computeSnapshot(aggregate, lastEvent)
+    }
 
-        retval
+    private static PatientSnapshot computeSnapshot(PatientAggregate aggregate, long lastEvent) {
+        def sePair = getSnapshotAndEventsSince(aggregate, lastEvent)
+
+        def forwardEventsSortedBackwards = applyReverts(sePair.bValue.reverse())
+        def deprecator = forwardEventsSortedBackwards.find { it instanceof PatientDeprecatedBy } as PatientDeprecatedBy
+
+        if (deprecator) {
+            return createEmptySnapshot().with {
+                it.deprecatedBy = deprecator.newPatient
+                it
+            }
+        } else {
+            def retval = applyEvents(sePair.aValue, forwardEventsSortedBackwards.reverse(), [], [aggregate])
+            log.info "  --> Computed: $retval"
+            retval
+        }
+
     }
 
     /**
@@ -79,7 +90,9 @@ class PatientQueryUtil {
      */
     @TailRecursive
     private static PatientSnapshot applyEvents(
-            PatientSnapshot snapshot, List<? extends PatientEvent> events) {
+            PatientSnapshot snapshot, List<? extends PatientEvent> events, List<PatientDeprecates> deprecatesList,
+            List<PatientAggregate> aggregates
+    ) {
         if (events.empty || snapshot.deleted) {
             return snapshot
         }
@@ -90,28 +103,47 @@ class PatientQueryUtil {
         switch (firstEvent) {
             case PatientCreated:
                 snapshot.name = (firstEvent as PatientCreated).name
-                return applyEvents(snapshot, remainingEvents)
+                return applyEvents(snapshot, remainingEvents, deprecatesList, aggregates)
             case PatientNameChanged:
                 snapshot.name = (firstEvent as PatientNameChanged).name
-                return applyEvents(snapshot, remainingEvents)
+                return applyEvents(snapshot, remainingEvents, deprecatesList, aggregates)
             case PatientProcedurePlanned:
                 def planned = firstEvent as PatientProcedurePlanned
-                def match = snapshot.plannedProcedures?.find {it.code == planned.code}
+                def match = snapshot.plannedProcedures?.find { it.code == planned.code }
                 if (!match) {
                     snapshot.addToPlannedProcedures(code: planned.code, datePlanned: planned.dateCreated)
                 }
-                return applyEvents(snapshot, remainingEvents)
+                return applyEvents(snapshot, remainingEvents, deprecatesList, aggregates)
             case PatientProcedurePerformed:
                 def performed = firstEvent as PatientProcedurePerformed
-                def match = snapshot.plannedProcedures?.find {it.code == performed.code}
+                def match = snapshot.plannedProcedures?.find { it.code == performed.code }
                 if (match) {
                     snapshot.removeFromPlannedProcedures(match)
                 }
                 snapshot.addToPerformedProcedures(code: performed.code, datePerformed: performed.dateCreated)
-                return applyEvents(snapshot, remainingEvents)
+                return applyEvents(snapshot, remainingEvents, deprecatesList, aggregates)
             case PatientDeleted:
                 snapshot.deleted = true
                 return snapshot
+            case PatientDeprecates:
+                def deprecated = firstEvent as PatientDeprecates
+                def newSnapshot = createEmptySnapshot()
+                newSnapshot.aggregate = deprecated.aggregate
+
+                def otherPatient = deprecated.deprecated
+                newSnapshot.addToDeprecates(identifier: otherPatient.identifier, authority: otherPatient.authority)
+
+                def allEvents = PatientEvent.findAllByAggregateInList(
+                        aggregates + [deprecated.deprecated], INCREMENTAL) as List<? extends PatientEvent>
+
+                def sortedEvents = allEvents.
+                        findAll { it.id != deprecated.id && it.id != deprecated.converse.id }.
+                        toSorted { a, b -> (a.dateCreated.time - b.dateCreated.time) as int }
+
+                log.info "Sorted Events: [\n    ${sortedEvents.join(',\n    ')}\n]"
+
+                def forwardEventsSortedBackwards = applyReverts(sortedEvents.reverse())
+                return applyEvents(newSnapshot, forwardEventsSortedBackwards.reverse(), deprecatesList + [deprecated], aggregates)
             default:
                 throw new IllegalArgumentException("This kind of event is not supported - ${firstEvent.class}")
         }
@@ -178,6 +210,7 @@ class PatientQueryUtil {
         new PatientSnapshot().with {
             it.performedProcedures = [] as Set
             it.plannedProcedures = [] as Set
+            it.deprecates = [] as Set
             it
         }
     }
