@@ -3,27 +3,6 @@
     <head>
         <title>Patient</title>
         <meta name="layout" content="main"/>
-        <style>
-        tr.reverted td {
-            color: #bbb;
-        }
-
-        tr.reverted td code {
-            color: #bbb;
-        }
-
-        tr.snapshot {
-            background-color: #006dba;
-        }
-
-        a .red {
-            color: red;
-        }
-
-        span.gold {
-            color: goldenrod;
-        }
-        </style>
     </head>
 
     <body>
