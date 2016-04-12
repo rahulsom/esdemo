@@ -40,8 +40,14 @@ class PatientController {
         def patientSnapshot = findPatient(identifier, authority, lastVersion)
         def aggregate = patientSnapshot.aggregate
 
-        def events = PatientEvent.findAllByAggregateAndIdLessThanEquals(
-                aggregate, lastVersion, REVERSE_ORDER) as List<? extends PatientEvent>
+
+        def deprecates = patientSnapshot.deprecates as Set<DeprecatedPatient>
+        def allAggregates = deprecates.collect {
+            PatientAggregate.findByIdentifierAndAuthority(it.identifier, it.authority)
+        } + [aggregate]
+
+        def events = PatientEvent.findAllByAggregateInListAndIdLessThanEquals(
+                allAggregates, lastVersion, REVERSE_ORDER) as List<? extends PatientEvent>
         events.each { event ->
             if (event instanceof PatientEventReverted && event.revertedBy == null) {
                 (event as PatientEventReverted).event.revertedBy = event.id
@@ -178,6 +184,37 @@ class PatientController {
 
         As(user) { delete(aggregate, reason) }
         redirect action: 'show', params: [authority: authority, identifier: identifier]
+    }
+
+    /**
+     * <code>
+     * http -v get http://localhost:8080/patient/merge.json identifier==001 authority==1.2.3.4 authority2==1.2.3.4 identifier2==002 user:rahul
+     * </code>
+     *
+     * @param authority
+     * @param identifier
+     * @param authority2
+     * @param identifier2
+     * @return
+     */
+    def merge(String authority, String identifier, String authority2, String identifier2) {
+        String user = request.getHeader('user') ?: session.getAttribute('user')
+        assert user
+
+        assert authority
+        assert identifier
+        def aggregate = PatientAggregate.findByAuthorityAndIdentifier(authority, identifier)
+
+        assert aggregate
+
+        assert authority2
+        assert identifier2
+        def aggregate2 = PatientAggregate.findByAuthorityAndIdentifier(authority2, identifier2)
+
+        assert aggregate2
+
+        As(user) { merge(aggregate, aggregate2) }
+        redirect action: 'show', params: [authority: authority2, identifier: identifier2]
     }
 
     /**

@@ -149,6 +149,20 @@
                     </div>
                     <g:submitButton name="Delete" class="btn btn-default"/>
                 </g:form>
+                <br>
+                <g:form action="merge" class="form-inline">
+                    <g:hiddenField name="authority" value="${params.authority}"/>
+                    <g:hiddenField name="identifier" value="${params.identifier}"/>
+                    <div class="form-group">
+                        <label class="sr-only" for="mergeIdentifier">Identifier</label>
+                        <input type="text" class="form-control" id="mergeIdentifier" placeholder="Identifier" name="identifier2">
+                    </div>
+                    <div class="form-group">
+                        <label class="sr-only" for="mergeAuthority">Authority</label>
+                        <input type="text" class="form-control" id="mergeAuthority" placeholder="Authority" name="authority2">
+                    </div>
+                    <g:submitButton name="Merge" class="btn btn-default"/>
+                </g:form>
             </div>
         </div>
 
