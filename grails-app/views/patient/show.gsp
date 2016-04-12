@@ -75,7 +75,11 @@
                                 </td>
                                 <td>${event.createdBy}</td>
                                 <td>${event.class.simpleName}</td>
-                                <td><code>${event.audit}</code></td>
+                                <td>
+                                    <code>${event.audit}<g:if test="${event.aggregate != patientSnapshot.aggregate}">
+                                        <small class="pull-right">(${event.aggregate.identifier}@${event.aggregate.authority})</small>
+                                    </g:if></code>
+                                </td>
                                 <td>
                                     <g:if test="${event.class.simpleName != 'PatientCreated'}">
                                         <g:if test="${event.revertedBy}">
@@ -84,8 +88,8 @@
                                         <g:else>
                                             <g:if test="${!params.version}">
                                                 <g:link controller="patient" action="revertEvent"
-                                                        params="[identifier: params.identifier,
-                                                                 authority : params.authority, eventId: event.id]">
+                                                        params="[identifier: event.aggregate.identifier,
+                                                                 authority : event.aggregate.authority, eventId: event.id]">
                                                     <span class="glyphicon glyphicon-erase red"></span>
                                                 </g:link>
                                             </g:if>
