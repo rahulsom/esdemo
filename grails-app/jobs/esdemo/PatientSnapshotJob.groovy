@@ -28,6 +28,9 @@ class PatientSnapshotJob {
         if (events) {
             def maxTime = events.dateCreated*.time.max()
             new File('build/date.txt').text = maxTime
+            log.error "Done computing snapshots for ${aggregates.size()} aggregates. Last Event was ${new Date(maxTime)}."
+        } else {
+            log.error "No new snapshots"
         }
     }
 
