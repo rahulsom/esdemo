@@ -103,7 +103,7 @@ class PatientDeprecates extends PatientEvent {
     PatientAggregate deprecated
 
     @Override String toString() { "<$id> ${dateCreated}: ${createdBy} merged [$deprecated] into this." }
-    @Override String getAudit() { new JsonBuilder([deprecated: deprecated]).toString() }
+    @Override String getAudit() { new JsonBuilder([deprecated: deprecated.toString()]).toString() }
 
     static hasOne = [
             converse: PatientDeprecatedBy
@@ -117,7 +117,7 @@ class PatientDeprecatedBy extends PatientEvent {
     PatientAggregate newPatient
 
     @Override String toString() { "<$id> ${dateCreated}: ${createdBy} merged into [$newPatient]" }
-    @Override String getAudit() { new JsonBuilder([newPatient: newPatient]).toString() }
+    @Override String getAudit() { new JsonBuilder([newPatient: newPatient.toString()]).toString() }
 
     static belongsTo = [
             converse: PatientDeprecates
