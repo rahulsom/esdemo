@@ -10,6 +10,7 @@ import groovy.util.logging.Slf4j
  */
 @GrailsCompileStatic
 @Slf4j
+//tag::begin[]
 class PatientCommandUtil {
 
     static PatientAggregate createPatient(String identifier, String authority, String name) {
@@ -22,6 +23,7 @@ class PatientCommandUtil {
     static PatientNameChanged changeName(PatientAggregate self, String name) {
         new PatientNameChanged(aggregate: self, createdBy: Util.user, name: name, dateCreated: Util.time).save(failOnError: true)
     }
+    //end::begin[]
 
     static PatientEventReverted revertEvent(PatientEvent event) {
         /*
@@ -64,5 +66,6 @@ class PatientCommandUtil {
         e2.save(flush: true, failOnError: true)
         e2.converse
     }
-
+//tag::close[]
 }
+//end::close[]

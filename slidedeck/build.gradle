@@ -54,6 +54,14 @@ asciidoctorj {
     version = '1.5.4'
 }
 
+task copyTheme(type:Copy) {
+    from fileTree("src/docs/asciidoc/styles")
+    into file("build/asciidoc/revealjs/reveal.js/css/theme")
+}
+
+copyTheme.inputs.dir file('src/docs/asciidoc/styles')
+copyTheme.inputs.dir file('build/asciidoc/revealjs/reveal.js/css/theme')
+
 asciidoctor {
 
     dependsOn jrubyPrepare
@@ -84,7 +92,7 @@ asciidoctor {
             'idprefix': '',
             'idseparator': '-',
             'docinfo1': '',
-            'revealjs_theme': 'black',
+            'revealjs_theme': 'override',
             'revealjs_transition': 'linear',
             'revealjs_history': 'true',
             'revealjs_slideNumber': 'true'

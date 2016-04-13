@@ -10,6 +10,7 @@ import groovy.transform.ToString
  * @author Rahul Somasunderam
  */
 @ToString
+//tag::main[]
 class PatientSnapshot {
 
     static belongsTo = [
@@ -19,18 +20,14 @@ class PatientSnapshot {
     Long lastEvent = 0L
     String name
     Boolean deleted = Boolean.FALSE
-
     PatientAggregate deprecatedBy
-
-    public static final ArrayList<String> HIDDEN_FIELDS = [
-            'class', 'id', 'aggregate', 'aggregateId'
-    ]
 
     static hasMany = [
             plannedProcedures  : PlannedProcedure,
             performedProcedures: PerformedProcedure,
             deprecates         : DeprecatedPatient
     ]
+//end::main[]
 
     static constraints = {
         deprecatedBy nullable: true
@@ -49,7 +46,9 @@ class PatientSnapshot {
                 name='$name'
             }""".stripIndent()
     }
+//tag::close[]
 }
+//end::close[]
 
 class PlannedProcedure {
     String code

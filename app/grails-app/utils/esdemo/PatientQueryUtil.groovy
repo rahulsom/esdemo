@@ -12,7 +12,9 @@ import groovy.util.logging.Slf4j
  */
 @GrailsCompileStatic
 @Slf4j
+// tag::begin[]
 class PatientQueryUtil {
+// end::begin[]
 
     public static final Map LATEST = [sort: 'id', order: 'desc', offset: 0, max: 1]
     public static final Map INCREMENTAL = [sort: 'id', order: 'asc']
@@ -26,12 +28,16 @@ class PatientQueryUtil {
      * @param lastEvent
      * @return
      */
+    //tag::method[]
     static PatientSnapshot findPatient(String identifier, String authority, long lastEvent) {
+        //end::method[]
         log.info "Identifier: $identifier, Authority: $authority"
         PatientAggregate aggregate = PatientAggregate.findByIdentifierAndAuthority(identifier, authority)
         log.info "  --> Aggregate: $aggregate"
         computeSnapshot(aggregate, lastEvent)
+        //tag::endMethod[]
     }
+    //end::endMethod[]
 
     private static PatientSnapshot computeSnapshot(PatientAggregate aggregate, long lastEvent) {
         def sePair = getSnapshotAndEventsSince(aggregate, lastEvent)
@@ -215,4 +221,6 @@ class PatientQueryUtil {
         }
     }
 
+    //tag::end[]
 }
+//end::end[]

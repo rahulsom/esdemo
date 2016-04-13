@@ -1,83 +1,367 @@
-
-= Example Deck
-Doc Writer <doc.writer@example.org>
-2014-09-09
+= Event Sourcing
+Rahul Somasunderam (@rahulsom)
+2016-04-21
 :revnumber: {project-version}
 :example-caption!:
+:stem:
 ifndef::imagesdir[:imagesdir: images]
 ifndef::sourcedir[:sourcedir: ../java]
 
-== Introduction
+== The big problems
 
 [%step]
-* This is an example deck.
-* This deck teaches something.
-* We just haven't decided what that is yet.
-
-== Speaker Notes
-
-Press the `*s*` key to access speaker notes.
+* Accidental merges. How do we _unmerge_ data?
+* Audit Trail
+* Versioned resources
+* CCDs for Observations
 
 [NOTE.speaker]
 --
-You've unlocked the super secret notes area.
-Neat huh?
+Joshua brought up accidental merges. Unmerging was important for some customer.
+We ended up giving a compromise solution.
+
+A lot of people have spent several months just fixing audit trail bugs.
+
+Versioned resources are important to FHIR compliance and for Dory to get incremental
+changes.
 --
 
-== Source Code
+== Object Relational Mapping
 
-[source,java]
-.Java code from project
+[source,sql]
 ----
-include::{sourcedir}/example/StringUtils.java[tags=contains,indent=0]
+CREATE TABLE PATIENT (
+    IDENTIFIER VARCHAR(10),
+    AUTHORITY  VARCHAR(20),
+    NAME       VARCHAR(20),
+    DELETED    NUMBER(1)
+)
 ----
-
-This page was built by the following command:
-
- $ ./gradlew asciidoctor
-
-== Blank screen
-
-You can press `*b*` or `*.*` to blank your current screen.
-
-Hit it again to bring it back.
-
-== Overview
-
-Press the `*esc*` key to get an overview of your slides.
-
-== Including documents from subdir
-
-.include::subdir/_b.adoc[]
-
-include::subdir/_b.adoc[]
-
-== Images
-
-[.thumb]
-image::sunset.jpg[scaledwidth=75%]
-
-== Attributes
-
-Press the down arrow key to see the next sub-slide.
-
-=== Attributes Part 1
-.Built-in
-asciidoctor-version:: {asciidoctor-version}
-safe-mode-name:: {safe-mode-name}
-docdir:: {docdir}
-docfile:: {docfile}
-imagesdir:: {imagesdir}
-
-=== Attributes Part 2
-.Custom
-project-version:: {project-version}
-sourcedir:: {sourcedir}
-endpoint-url:: {endpoint-url}
-
-== build.gradle
 
 [source,groovy]
 ----
-include::{build-gradle}[]
+class Patient {
+    String identifier
+    String authority
+    String name
+    Boolean deleted
+}
 ----
+
+=== Making Changes
+
+[source,sql]
+----
+UPDATE PATIENT SET NAME='RAHUL'
+    WHERE IDENTIFIER='32' AND AUTHORITY='1.2.3.4';
+
+INSERT INTO AUDIT_MESSAGE (ID, TYPE, OBJECT_TYPE, OBJECT_ID, DATA)
+    VALUES (408, 'UPDATE', 'PATIENT', '32@1.2.3.4', 'NAME CHANGED');
+----
+
+=== Mutation
+
+image::godzilla.png[]
+
+=== Mutation is not all bad
+
+image::tmnt.png[]
+
+=== How we debug problems
+
+Question: Why is this Patient called **Rahul**?
+
+[%step]
+* Look at Patient in UI
+* Look at Patient through Grails Console
+* Look at Audit Trail
+* Look at logs
+* Checkout same release as in production
+* Find out what the code is doing
+* Works as designed
+
+== Versioned Resources
+
+
+=== Archive Domains
+
+[source,sql]
+----
+CREATE TABLE PATIENT_ARCHIVE (
+    IDENTIFIER VARCHAR(10),
+    AUTHORITY  VARCHAR(20),
+    VERSION    NUMBER(10),
+    NAME       VARCHAR(20),
+    DELETED    NUMBER(1)
+)
+----
+
+=== Or Event Sourcing
+
+[data-background="images/questionblock.jpg"]
+=== &nbsp;
+
+== Audit Trail
+
+=== Developer Discipline
+
+[%step]
+* Author of new service code makes an effort to audit trail
+* No one bypasses service code that audits something
+* Code reviewers catch all these problems
+* QA catches all these problems
+
+=== Event Sourcing
+
+== What do banks do?
+
+
+[data-background="images/passbook.jpg"]
+=== Passbooks
+
+== Lets go back to School
+
+=== Word Problems III
+
+Mary has **three** apples. She buys **two** apples from the store.
+
+How many apples does she have?
+
+=== Word Problems III Solution
+
+[fragment]#3 + 2#
+
+[fragment]#**5**#
+
+=== Word Problems VII
+
+[%step]
+Mary has **three** apples.
+She buys **two** from the store.
+She puts **four** in her Apple Pie.
+She receives **six** from her mom.
+She gives **two** to John.
+
+How many apples does she have left?
+
+=== Word Problems VII
+
+[fragment]#3 + 2 - 4 + 6 - 2#
+
+[fragment]#**5** - 4 + 6 - 2#
+
+[fragment]#**1** + 6 - 2#
+
+[fragment]#**7** - 2#
+
+[fragment]#**5**#
+
+=== Now apply it to Healthcare
+
+_rahul_ created **john** as patient **123@1.2.3.4**
+
+_donald_ changed the name on **123@1.2.3.4** to **mike**
+
+_daffy_ changed the name on **123@1.2.3.4** to **sean**
+
+_goofy_ changed the name on **123@1.2.3.4** to **tim**
+
+_goofy_ realized _that_ was a mistake and reverted that change
+
+What is the name of patient **123@1.2.3.4**?
+
+=== Now apply it to Healthcare II
+
+_micky_ planned an **APPENDECTOMY** for **123@1.2.3.4**
+
+_micky_ planned a **FLUSHOT** for **123@1.2.3.4**
+
+_stevie_ performed a **FLUSHOT** for **123@1.2.3.4**
+
+_micky_ planned a **FLUSHOT** for **123@1.2.3.4**
+
+
+What are the pending procedures for **123@1.2.3.4**?
+
+What are the procedures performed so far for **123@1.2.3.4**?
+
+=== There can be 1000s of events
+
+image::passbook2.jpg[]
+
+=== Snapshots FTW!
+
+== Event Sourcing Basics
+
+**A**ggregate
+
+**E**vent
+
+**S**napshot
+
+=== Current State
+
+[stem]
+++++
+S_N = S_0 + sum_(i=1)^N E_i
+++++
+
+=== Optimized solution
+
+[stem]
+++++
+S_K = S_0 + sum_(i=1)^K E_i
+++++
+
+[stem]
+++++
+S_N = S_K + sum_(i=K+1)^N E_i
+++++
+
+=== This works, but not always
+
+It assumes that events are applied Left to Right.
+
+[fragment]#Reverts are applied Right to Left#
+
+=== Expanded form
+
+[stem]
+++++
+S_N = S_0 + E_1 + E_2 + E_3 ... + E_(N-1) + E_(N)
+++++
+
+=== When Reverts kick in
+
+[stem]
+++++
+E_N = bar E_k
+++++
+
+[stem]
+++++
+S_N = S_0 + E_1 + E_2 + E_3 ... + E_k ... + E_(N-1) + E_N
+++++
+
+[stem]
+++++
+S_N = S_0 + E_1 + E_2 + E_3 ... + E_k ... + E_(N-1) + bar E_k
+++++
+
+[stem]
+++++
+S_N = S_0 + E_1 + E_2 + E_3 ... + E_k ...  + bar E_k + E_(N-1)
+++++
+
+And you can keep shifting the revert to the left until it's right next to E(k)
+
+[stem]
+++++
+S_N = S_0 + E_1 + E_2 + E_3 ... + E_k + bar E_k ... + E_(N-1)
+++++
+
+[stem]
+++++
+S_N = S_0 + E_1 + E_2 + E_3 ... + E_(k-1) + E_(k+1) ... + E_(N-1)
+++++
+
+=== In unexpanded form
+
+[stem]
+++++
+E_N = bar E_k
+++++
+
+[stem]
+++++
+S_N = S_(k-1) + E_k + sum_(i=K+1)^(N-1) E_i + E_N
+++++
+
+[stem]
+++++
+S_N = S_(k-1) + E_k + sum_(i=K+1)^(N-1) E_i + bar E_k
+++++
+
+[stem]
+++++
+S_N = S_(k-1) + sum_(i=K+1)^(N-1) E_i
+++++
+
+
+== Now let's see the code
+
+=== The Aggregate
+
+[source,groovy]
+----
+include::../../../../app/grails-app/domain/esdemo/PatientAggregate.groovy[tags=main]
+include::../../../../app/grails-app/domain/esdemo/PatientAggregate.groovy[tags=close]
+----
+
+=== The Snapshot
+
+[source,groovy]
+----
+include::../../../../app/grails-app/domain/esdemo/PatientSnapshot.groovy[tags=main]
+include::../../../../app/grails-app/domain/esdemo/PatientSnapshot.groovy[tags=close]
+----
+
+=== The Events
+
+[source,groovy]
+----
+include::../../../../app/grails-app/domain/esdemo/PatientEvent.groovy[tags=main]
+include::../../../../app/grails-app/domain/esdemo/PatientEvent.groovy[tags=date]
+include::../../../../app/grails-app/domain/esdemo/PatientEvent.groovy[tags=close]
+----
+
+=== Example Event
+
+[source,groovy]
+----
+include::../../../../app/grails-app/domain/esdemo/PatientEvent.groovy[tags=created]
+----
+
+== Preserving Sanity
+
+Obviously, you don't want to perform event computation everywhere
+
+=== CQRS
+
+Command Query Responsiblity Segregation
+
+=== Patient Command Util
+
+[source,groovy]
+----
+include::../../../../app/grails-app/utils/esdemo/PatientCommandUtil.groovy[tags=begin]
+include::../../../../app/grails-app/utils/esdemo/PatientCommandUtil.groovy[tags=close]
+----
+
+=== Patient Query Util
+
+[source,groovy]
+----
+include::../../../../app/grails-app/utils/esdemo/PatientQueryUtil.groovy[tags=begin]
+include::../../../../app/grails-app/utils/esdemo/PatientQueryUtil.groovy[tags=method]
+        ...
+include::../../../../app/grails-app/utils/esdemo/PatientQueryUtil.groovy[tags=endMethod]
+include::../../../../app/grails-app/utils/esdemo/PatientQueryUtil.groovy[tags=end]
+----
+
+== Demo time
+
+== Problems
+
+[%step]
+* Database size for snapshots and events
+* Single table vs multi table inheritance
+* RDBMS vs Cassandra
+
+== Do not use this in production
+
+There are lots of framework that perform magic that makes it simpler to use ES and CQRS
+
+* Lagom
+* Concursus
+* ES4j

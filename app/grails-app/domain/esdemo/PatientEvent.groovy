@@ -10,41 +10,45 @@ import groovy.json.JsonBuilder
  *
  * @author Rahul Somasunderam
  */
+//tag::main[]
 abstract class PatientEvent {
     static belongsTo = [
             aggregate: PatientAggregate
     ]
-
+//end::main[]
     /**
      * This says when the event was performed. It's a grails magic field and doesn't need to be populated manually
      */
+//tag::date[]
     Date dateCreated
+//end::date[]
 
     /**
      * This says who performed the event. It goes along with `dateCreated`, but needs to be specified.
      */
+//tag::close[]
     String createdBy
-
-    static constraints = {
-    }
 
     Long revertedBy
     static transients = ['revertedBy']
 
     abstract String getAudit()
 }
+//end::close[]
 
 /**
  * Represents the creation of a patient.
  *
  * @author Rahul Somasunderam
  */
+//tag::created[]
 class PatientCreated extends PatientEvent {
     String name
 
     @Override String toString() { "<$id> ${dateCreated}: ${createdBy} created $aggregate with name $name" }
     @Override String getAudit() { new JsonBuilder([name: name]).toString() }
 }
+//end::created[]
 
 /**
  * Indicates the name changed for a patient
