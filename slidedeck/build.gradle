@@ -99,5 +99,5 @@ asciidoctor {
 
     options template_dirs : [new File(templateDir,'templates/slim').absolutePath ]
 
-    dependsOn download
+    dependsOn download, copyTheme
 }

@@ -351,16 +351,32 @@ include::../../../../app/grails-app/utils/esdemo/PatientQueryUtil.groovy[tags=en
 
 == Demo time
 
+== Messaging
+
+[stem]
+++++
+A = 3 + 2 i ; B = 1 - i ; C = 2 + i;
+++++
+
+[stem]
+++++
+4A + 3B = 2C + 3A + x
+++++
+
+Solve for `x`
+
 == Problems
 
 [%step]
 * Database size for snapshots and events
 * Single table vs multi table inheritance
 * RDBMS vs Cassandra
+* REST APIs and the knapsack problem
+* Search vs Sort
 
 == Do not use this in production
 
-There are lots of framework that perform magic that makes it simpler to use ES and CQRS
+There are lots of frameworks that perform magic that makes it simpler to use ES and CQRS
 
 * Lagom
 * Concursus
