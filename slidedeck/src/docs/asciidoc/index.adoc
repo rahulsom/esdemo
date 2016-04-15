@@ -349,6 +349,18 @@ include::../../../../app/grails-app/utils/esdemo/PatientQueryUtil.groovy[tags=en
 include::../../../../app/grails-app/utils/esdemo/PatientQueryUtil.groovy[tags=end]
 ----
 
+=== More details
+
+[source, groovy]
+----
+   PatientSnapshot findPatient(identity: String, authority: String, version: long)
+List<PatientEvent> applyReverts(allEvents: List<Event>, accumulator: List<Event>)
+   PatientSnapshot applyEvents(snapshot: PatientSnapshot, events: List<Event>)
+Pair<PatientSnapshot, List<Event>>
+                   getSnapshotAndEventsSince(aggregate: PatientAggregate, version: long)
+   PatientSnapshot getLatestSnapshot(aggregate: PatientAggregate, version: long)
+----
+
 == Demo time
 
 == Messaging
