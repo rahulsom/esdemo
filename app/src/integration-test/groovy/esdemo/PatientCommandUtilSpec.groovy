@@ -1,13 +1,12 @@
 package esdemo
 
-import grails.compiler.GrailsCompileStatic
 import grails.test.mixin.integration.Integration
 import grails.transaction.Rollback
-import grails.validation.ValidationException
+import org.springframework.dao.DuplicateKeyException
 import spock.lang.Specification
 
-import static esdemo.PatientCommandUtil.*
 import static Util.As
+import static esdemo.PatientCommandUtil.*
 
 @Integration
 @Rollback
@@ -30,10 +29,8 @@ class PatientCommandUtilSpec extends Specification {
         then: "First one gets saved"
         p1
 
-        and: "The other one throws a validation exception"
-        thrown ValidationException
-        PatientEvent.count() == 1 + old(PatientEvent.count())
-        !p2
+        and: "The other one is considered duplicate"
+        thrown DuplicateKeyException
     }
 
     def "change name of patient works"() {
