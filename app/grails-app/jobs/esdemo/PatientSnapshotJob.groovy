@@ -2,6 +2,8 @@ package esdemo
 
 class PatientSnapshotJob {
 
+    def patientQueryUtil
+
     static triggers = {
         simple repeatInterval: 30000l
     }
@@ -21,7 +23,7 @@ class PatientSnapshotJob {
         log.error "Aggregating ${aggregates.size()} aggregates"
 
         aggregates.each {
-            def snapshot = PatientQueryUtil.findPatient(it.identifier, it.authority, Long.MAX_VALUE)
+            def snapshot = patientQueryUtil.findPatient(it.identifier, it.authority, Long.MAX_VALUE)
             snapshot.save()
         }
 

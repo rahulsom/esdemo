@@ -4,6 +4,7 @@ import grails.compiler.GrailsCompileStatic
 import grails.util.Pair
 import groovy.transform.TailRecursive
 import groovy.util.logging.Slf4j
+import org.springframework.stereotype.Component
 
 /**
  * Provides capability to obtain a snapshot of a Patient
@@ -12,8 +13,9 @@ import groovy.util.logging.Slf4j
  */
 @GrailsCompileStatic
 @Slf4j
+@Component
 // tag::begin[]
-class PatientQueryUtil {
+class PatientQueryUtil implements QueryUtil {
 // end::begin[]
 
     public static final Map LATEST = [sort: 'id', order: 'desc', offset: 0, max: 1]
@@ -29,7 +31,7 @@ class PatientQueryUtil {
      * @return
      */
     //tag::method[]
-    static PatientSnapshot findPatient(String identifier, String authority, long lastEvent) {
+    PatientSnapshot findPatient(String identifier, String authority, long lastEvent) {
         //end::method[]
         log.info "Identifier: $identifier, Authority: $authority"
         PatientAggregate aggregate = PatientAggregate.findByIdentifierAndAuthority(identifier, authority)
@@ -39,7 +41,7 @@ class PatientQueryUtil {
     }
     //end::endMethod[]
 
-    private static PatientSnapshot computeSnapshot(PatientAggregate aggregate, long lastEvent) {
+    private PatientSnapshot computeSnapshot(PatientAggregate aggregate, long lastEvent) {
         def sePair = getSnapshotAndEventsSince(aggregate, lastEvent)
 
         def forwardEventsSortedBackwards = applyReverts(sePair.bValue.reverse())
@@ -47,7 +49,7 @@ class PatientQueryUtil {
 
         if (deprecator) {
             return createEmptySnapshot().with {
-                it.deprecatedBy = deprecator.newPatient
+                it.deprecatedBy = deprecator.deprecator
                 it
             }
         } else {
@@ -66,7 +68,7 @@ class PatientQueryUtil {
      * @return
      */
     @TailRecursive
-    private static List<? extends PatientEvent> applyReverts(
+    private List<? extends PatientEvent> applyReverts(
             List<? extends PatientEvent> events, List<? extends PatientEvent> accumulator = []) {
         if (!events) {
             return accumulator
@@ -95,7 +97,7 @@ class PatientQueryUtil {
      * @return
      */
     @TailRecursive
-    private static PatientSnapshot applyEvents(
+    private PatientSnapshot applyEvents(
             PatientSnapshot snapshot, List<? extends PatientEvent> events, List<PatientDeprecates> deprecatesList,
             List<PatientAggregate> aggregates
     ) {
@@ -161,7 +163,7 @@ class PatientQueryUtil {
      * @param lastEventInSnapshot
      * @return
      */
-    private static Pair<PatientSnapshot, List<PatientEvent>> getSnapshotAndEventsSince(
+    private Pair<PatientSnapshot, List<PatientEvent>> getSnapshotAndEventsSince(
             PatientAggregate aggregate, long lastEventInSnapshot, long lastEvent = lastEventInSnapshot) {
         def lastSnapshot = getLatestSnapshot(aggregate, lastEventInSnapshot)
 
@@ -193,7 +195,7 @@ class PatientQueryUtil {
      * @param startWithEvent
      * @return
      */
-    private static PatientSnapshot getLatestSnapshot(PatientAggregate aggregate, Long startWithEvent) {
+    private PatientSnapshot getLatestSnapshot(PatientAggregate aggregate, Long startWithEvent) {
 
         def snapshots = startWithEvent == Long.MAX_VALUE ?
                 PatientSnapshot.findAllByAggregate(aggregate, LATEST) :
@@ -212,7 +214,7 @@ class PatientQueryUtil {
         lastSnapshot
     }
 
-    private static PatientSnapshot createEmptySnapshot() {
+    private PatientSnapshot createEmptySnapshot() {
         new PatientSnapshot().with {
             it.performedProcedures = [] as Set
             it.plannedProcedures = [] as Set

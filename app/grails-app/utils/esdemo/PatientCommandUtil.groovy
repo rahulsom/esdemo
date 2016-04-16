@@ -60,7 +60,7 @@ class PatientCommandUtil {
      * @return
      */
     static PatientDeprecatedBy merge(PatientAggregate self, PatientAggregate into) {
-        def e1 = new PatientDeprecatedBy(aggregate: self, createdBy: Util.user, newPatient: into, dateCreated: Util.time)
+        def e1 = new PatientDeprecatedBy(aggregate: self, createdBy: Util.user, deprecator: into, dateCreated: Util.time)
         def e2 = new PatientDeprecates(aggregate: into, createdBy: Util.user, deprecated: self, dateCreated: Util.time, converse: e1)
         e1.converse = e2
         e2.save(flush: true, failOnError: true)

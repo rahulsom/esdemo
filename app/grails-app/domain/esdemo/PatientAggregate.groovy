@@ -8,7 +8,7 @@ package esdemo
  * @author Rahul Somasunderam
  */
 //tag::main[]
-class PatientAggregate {
+class PatientAggregate implements Aggregate {
     String identifier
     String authority
 

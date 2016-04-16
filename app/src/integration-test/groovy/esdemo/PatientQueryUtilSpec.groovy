@@ -8,17 +8,18 @@ import spock.lang.Specification
 
 import static Util.As
 import static esdemo.PatientCommandUtil.*
-import static esdemo.PatientQueryUtil.findPatient
 
 @Integration
 @Rollback
 @Slf4j
 class PatientQueryUtilSpec extends Specification {
 
+    def patientQueryUtil
+
     def "Patient is created"() {
         when: "I create a patient"
         As('rahul') { createPatient '123', '1.2.3.4', 'john' }
-        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        def s1 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
 
         then: "I see the correct name"
         s1 != null
@@ -32,7 +33,7 @@ class PatientQueryUtilSpec extends Specification {
             def p1 = createPatient '123', '1.2.3.4', 'john'
             changeName p1, 'mike'
         }
-        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        def s1 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
 
         then: "I see the correct new name"
         s1 != null
@@ -45,7 +46,7 @@ class PatientQueryUtilSpec extends Specification {
         def p1 = As('rahul') { createPatient '123', '1.2.3.4', 'john' }
         def e = As('rahul') { changeName p1, 'mike' }
         def e1 = As('rahul') { revertEvent e }
-        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        def s1 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
 
         then: "I see the correct new name"
         s1 != null
@@ -60,7 +61,7 @@ class PatientQueryUtilSpec extends Specification {
             planProcedure p1, 'FLUSHOT'
             planProcedure p1, 'APPENDECTOMY'
         }
-        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        def s1 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
 
         then: "I see the correct new name"
         s1 != null
@@ -78,7 +79,7 @@ class PatientQueryUtilSpec extends Specification {
             planProcedure p1, 'APPENDECTOMY'
             planProcedure p1, 'FLUSHOT'
         }
-        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        def s1 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
 
         then: "I see the correct new name"
         s1 != null
@@ -95,7 +96,7 @@ class PatientQueryUtilSpec extends Specification {
             planProcedure p1, 'FLUSHOT'
             performProcedure p1, 'FLUSHOT'
         }
-        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        def s1 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
 
         then: "I see the correct new name"
         s1 != null
@@ -112,10 +113,10 @@ class PatientQueryUtilSpec extends Specification {
             planProcedure p1, 'FLUSHOT'
             performProcedure p1, 'FLUSHOT'
         }
-        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        def s1 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
         s1.save()
         As('mickey') { planProcedure p1, 'FLUSHOT' }
-        s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        s1 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
 
         then: "I see the correct new name"
         s1 != null
@@ -132,11 +133,11 @@ class PatientQueryUtilSpec extends Specification {
             planProcedure p1, 'FLUSHOT'
             performProcedure p1, 'FLUSHOT'
         }
-        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        def s1 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
         s1.save()
         As('mickey') { planProcedure p1, 'FLUSHOT' }
         def lastEvent = As('goofy') { revertEvent e1 }
-        s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        s1 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
 
         then: "I see the correct new name"
         s1 != null
@@ -146,10 +147,10 @@ class PatientQueryUtilSpec extends Specification {
         s1.plannedProcedures.size() == 1
 
         when: "I snapshot again"
-        def s2 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        def s2 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
         s2.save()
 
-        s2 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        s2 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
 
         then: "The snapshot should have the correct last event"
         s2.lastEvent == lastEvent.id
@@ -178,7 +179,7 @@ class PatientQueryUtilSpec extends Specification {
         m1.converse != null
 
         when: "I find the deprecated patient"
-        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        def s1 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
 
         then: "There should be one planned procedure and one performed procedure"
         s1.plannedProcedures.size() == 0
@@ -186,7 +187,7 @@ class PatientQueryUtilSpec extends Specification {
         s1.deprecatedBy == p2
 
         when: "I find the deprecating patient"
-        def s2 = findPatient '42', '1.2.3.4', Long.MAX_VALUE
+        def s2 = patientQueryUtil.findPatient '42', '1.2.3.4', Long.MAX_VALUE
 
         then: "There should be one planned procedure and one performed procedure"
         s2.aggregate.identifier == '42'
@@ -233,7 +234,7 @@ class PatientQueryUtilSpec extends Specification {
 
         when: "I find the deprecated patient"
         log.info "Loading deprecated patient"
-        def s1 = findPatient '123', '1.2.3.4', Long.MAX_VALUE
+        def s1 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
 
         then: "There should be one planned procedure and one performed procedure"
         s1.plannedProcedures.size() == 0
@@ -241,7 +242,7 @@ class PatientQueryUtilSpec extends Specification {
         s1.deprecatedBy == null
 
         when: "I find the deprecating patient"
-        def s2 = findPatient '42', '1.2.3.4', Long.MAX_VALUE
+        def s2 = patientQueryUtil.findPatient '42', '1.2.3.4', Long.MAX_VALUE
 
         then: "There should be one planned procedure and one performed procedure"
         s2.plannedProcedures.size() == 1

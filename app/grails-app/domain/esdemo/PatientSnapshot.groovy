@@ -11,7 +11,7 @@ import groovy.transform.ToString
  */
 @ToString
 //tag::main[]
-class PatientSnapshot {
+class PatientSnapshot implements Snapshot<PatientAggregate> {
 
     static belongsTo = [
             aggregate: PatientAggregate

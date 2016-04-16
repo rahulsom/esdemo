@@ -11,7 +11,7 @@ import groovy.json.JsonBuilder
  * @author Rahul Somasunderam
  */
 //tag::main[]
-abstract class PatientEvent {
+abstract class PatientEvent implements Event<PatientAggregate, Long> {
     static belongsTo = [
             aggregate: PatientAggregate
     ]
@@ -31,8 +31,6 @@ abstract class PatientEvent {
 
     Long revertedBy
     static transients = ['revertedBy']
-
-    abstract String getAudit()
 }
 //end::close[]
 
@@ -93,7 +91,7 @@ class PatientDeleted extends PatientEvent {
 /**
  * Indicates an event has been reverted
  */
-class PatientEventReverted extends PatientEvent {
+class PatientEventReverted extends PatientEvent implements RevertEvent<PatientAggregate, Long> {
     PatientEvent event
 
     @Override String toString() { "<$id> ${dateCreated}: ${createdBy} reverted [$event]" }
@@ -103,7 +101,7 @@ class PatientEventReverted extends PatientEvent {
 /**
  * Indicates current patient deprecates another patient
  */
-class PatientDeprecates extends PatientEvent {
+class PatientDeprecates extends PatientEvent implements Deprecates<PatientAggregate, Long> {
     PatientAggregate deprecated
 
     @Override String toString() { "<$id> ${dateCreated}: ${createdBy} merged [$deprecated] into this." }
@@ -117,11 +115,11 @@ class PatientDeprecates extends PatientEvent {
 /**
  * Indicates current patient is deprecated by new Patient
  */
-class PatientDeprecatedBy extends PatientEvent {
-    PatientAggregate newPatient
+class PatientDeprecatedBy extends PatientEvent implements DeprecatedBy<PatientAggregate, Long> {
+    PatientAggregate deprecator
 
-    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} merged into [$newPatient]" }
-    @Override String getAudit() { new JsonBuilder([newPatient: newPatient.toString()]).toString() }
+    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} merged into [$deprecator]" }
+    @Override String getAudit() { new JsonBuilder([deprecator: deprecator.toString()]).toString() }
 
     static belongsTo = [
             converse: PatientDeprecates

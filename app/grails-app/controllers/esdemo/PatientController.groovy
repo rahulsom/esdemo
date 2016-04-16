@@ -3,12 +3,12 @@ package esdemo
 import grails.compiler.GrailsCompileStatic
 
 import static esdemo.PatientCommandUtil.*
-import static esdemo.PatientQueryUtil.findPatient
 import static Util.As
 
 @GrailsCompileStatic
 class PatientController {
 
+    PatientQueryUtil patientQueryUtil
     public static final LinkedHashMap<String, String> REVERSE_ORDER = [sort: 'id', order: 'desc']
 
     /**
@@ -37,7 +37,7 @@ class PatientController {
 
 
         def lastVersion = version?.longValue() ?: Long.MAX_VALUE
-        def patientSnapshot = findPatient(identifier, authority, lastVersion)
+        def patientSnapshot = patientQueryUtil.findPatient(identifier, authority, lastVersion)
         def aggregate = patientSnapshot.aggregate
 
 
