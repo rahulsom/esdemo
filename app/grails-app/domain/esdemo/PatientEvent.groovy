@@ -11,7 +11,7 @@ import groovy.json.JsonBuilder
  * @author Rahul Somasunderam
  */
 //tag::main[]
-abstract class PatientEvent implements Event<PatientAggregate, Long> {
+abstract class PatientEvent implements Event<PatientAggregate> {
     static belongsTo = [
             aggregate: PatientAggregate
     ]
@@ -91,7 +91,7 @@ class PatientDeleted extends PatientEvent {
 /**
  * Indicates an event has been reverted
  */
-class PatientEventReverted extends PatientEvent implements RevertEvent<PatientAggregate, Long> {
+class PatientEventReverted extends PatientEvent implements RevertEvent<PatientAggregate> {
     PatientEvent event
 
     @Override String toString() { "<$id> ${dateCreated}: ${createdBy} reverted [$event]" }
@@ -101,7 +101,7 @@ class PatientEventReverted extends PatientEvent implements RevertEvent<PatientAg
 /**
  * Indicates current patient deprecates another patient
  */
-class PatientDeprecates extends PatientEvent implements Deprecates<PatientAggregate, Long> {
+class PatientDeprecates extends PatientEvent implements Deprecates<PatientAggregate> {
     PatientAggregate deprecated
 
     @Override String toString() { "<$id> ${dateCreated}: ${createdBy} merged [$deprecated] into this." }
@@ -115,7 +115,7 @@ class PatientDeprecates extends PatientEvent implements Deprecates<PatientAggreg
 /**
  * Indicates current patient is deprecated by new Patient
  */
-class PatientDeprecatedBy extends PatientEvent implements DeprecatedBy<PatientAggregate, Long> {
+class PatientDeprecatedBy extends PatientEvent implements DeprecatedBy<PatientAggregate> {
     PatientAggregate deprecator
 
     @Override String toString() { "<$id> ${dateCreated}: ${createdBy} merged into [$deprecator]" }

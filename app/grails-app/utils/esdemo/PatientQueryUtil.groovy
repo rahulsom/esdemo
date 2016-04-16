@@ -1,7 +1,6 @@
 package esdemo
 
 import grails.compiler.GrailsCompileStatic
-import grails.util.Pair
 import groovy.transform.TailRecursive
 import groovy.util.logging.Slf4j
 import org.springframework.stereotype.Component
@@ -15,7 +14,7 @@ import org.springframework.stereotype.Component
 @Slf4j
 @Component
 // tag::begin[]
-class PatientQueryUtil implements QueryUtil {
+class PatientQueryUtil implements QueryUtil<PatientAggregate, PatientEvent, PatientSnapshot> {
 // end::begin[]
 
     public static final Map LATEST = [sort: 'id', order: 'desc', offset: 0, max: 1]
@@ -41,72 +40,24 @@ class PatientQueryUtil implements QueryUtil {
     }
     //end::endMethod[]
 
-    private PatientSnapshot computeSnapshot(PatientAggregate aggregate, long lastEvent) {
-        def sePair = getSnapshotAndEventsSince(aggregate, lastEvent)
-
-        def forwardEventsSortedBackwards = applyReverts(sePair.bValue.reverse())
-        def deprecator = forwardEventsSortedBackwards.find { it instanceof PatientDeprecatedBy } as PatientDeprecatedBy
-
-        if (deprecator) {
-            return createEmptySnapshot().with {
-                it.deprecatedBy = deprecator.deprecator
-                it
-            }
-        } else {
-            def retval = applyEvents(sePair.aValue, forwardEventsSortedBackwards.reverse(), [], [aggregate])
-            log.info "  --> Computed: $retval"
-            retval
-        }
-
+    @Override
+    List<PatientEvent> getUncomputedEvents(PatientAggregate aggregate, PatientSnapshot lastSnapshot, long lastEvent) {
+        PatientEvent.
+                findAllByAggregateAndIdGreaterThanAndIdLessThanEquals(
+                        aggregate, lastSnapshot?.lastEvent ?: 0L, lastEvent, INCREMENTAL)
     }
 
-    /**
-     * Applies all revert events from a list and returns the list with only valid forward events
-     *
-     * @param events list of events
-     * @param accumulator accumulator of events. Can be skipped when called from outside code.
-     * @return
-     */
+    @Override
     @TailRecursive
-    private List<? extends PatientEvent> applyReverts(
-            List<? extends PatientEvent> events, List<? extends PatientEvent> accumulator = []) {
-        if (!events) {
-            return accumulator
-        }
-        def head = events.head()
-        def tail = events.tail()
-
-        if (head instanceof PatientEventReverted) {
-            def revert = head as PatientEventReverted
-            if (!tail.contains(revert.event)) {
-                throw new Exception("Cannot revert event that does not exist in unapplied list - ${revert.event.id}")
-            }
-            log.debug "    --> Revert: $revert"
-            revert.event.revertedBy = revert.id
-            return applyReverts(tail.findAll { it != revert.event }, accumulator)
-        } else {
-            return applyReverts(tail, accumulator + head)
-        }
-    }
-
-    /**
-     * Applies forward events on a snapshot and returns snapshot
-     *
-     * @param snapshot
-     * @param events
-     * @return
-     */
-    @TailRecursive
-    private PatientSnapshot applyEvents(
-            PatientSnapshot snapshot, List<? extends PatientEvent> events, List<PatientDeprecates> deprecatesList,
-            List<PatientAggregate> aggregates
-    ) {
+    PatientSnapshot applyEvents(
+            PatientSnapshot snapshot, List<? extends Event<PatientAggregate>> events,
+            List<? extends Deprecates<PatientAggregate>> deprecatesList, List<PatientAggregate> aggregates) {
         if (events.empty || snapshot.deleted) {
             return snapshot
         }
         def firstEvent = events.head()
         def remainingEvents = events.tail()
-        // snapshot.lastEvent = firstEvent.id
+
         log.debug "    --> Event: $firstEvent"
         switch (firstEvent) {
             case PatientCreated:
@@ -157,64 +108,28 @@ class PatientQueryUtil implements QueryUtil {
         }
     }
 
-    /**
-     * Given a last event, finds the latest snapshot older than that event
-     * @param aggregate
-     * @param lastEventInSnapshot
-     * @return
-     */
-    private Pair<PatientSnapshot, List<PatientEvent>> getSnapshotAndEventsSince(
-            PatientAggregate aggregate, long lastEventInSnapshot, long lastEvent = lastEventInSnapshot) {
-        def lastSnapshot = getLatestSnapshot(aggregate, lastEventInSnapshot)
-
-        List<? extends PatientEvent> uncomputedEvents = PatientEvent.
-                findAllByAggregateAndIdGreaterThanAndIdLessThanEquals(
-                        aggregate, lastSnapshot?.lastEvent ?: 0L, lastEvent, INCREMENTAL)
-
-        def uncomputedReverts = uncomputedEvents.
-                findAll { it instanceof PatientEventReverted } as List<PatientEventReverted>
-
-        def oldestRevertedEvent = uncomputedReverts*.event*.id.min()
-        log.info "Oldest reverted event: $oldestRevertedEvent"
-        if (uncomputedReverts && oldestRevertedEvent <= lastSnapshot.lastEvent) {
-            log.info "Uncomputed reverts exist: $uncomputedEvents"
-            getSnapshotAndEventsSince(aggregate, oldestRevertedEvent, lastEvent)
-        } else {
-            log.info "Event Ids in pair: ${uncomputedEvents*.id}"
-            if (uncomputedEvents) {
-                lastSnapshot.lastEvent = uncomputedEvents*.id.max()
-            }
-            new Pair(lastSnapshot, uncomputedEvents)
-        }
-    }
-
-    /**
-     * Finds the latest snapshot that is older than event. The snapshot returned is detached.
-     *
-     * @param aggregate
-     * @param startWithEvent
-     * @return
-     */
-    private PatientSnapshot getLatestSnapshot(PatientAggregate aggregate, Long startWithEvent) {
-
+    @Override
+    PatientSnapshot maybeGetSnapshot(long startWithEvent, PatientAggregate aggregate) {
         def snapshots = startWithEvent == Long.MAX_VALUE ?
                 PatientSnapshot.findAllByAggregate(aggregate, LATEST) :
                 PatientSnapshot.findAllByAggregateAndLastEventLessThan(aggregate, startWithEvent, LATEST)
 
-        PatientSnapshot lastSnapshot = (snapshots ?: [createEmptySnapshot()])[0] as PatientSnapshot
+        if (!snapshots) {
+            return null
+        }
 
-        log.info "    --> Last Snapshot: ${lastSnapshot.id ? lastSnapshot : '<none>'}"
+        def lastSnapshot = snapshots[0] as PatientSnapshot
 
         if (lastSnapshot.isAttached()) {
             lastSnapshot.discard()
             lastSnapshot.id = null
         }
 
-        lastSnapshot.aggregate = aggregate
         lastSnapshot
     }
 
-    private PatientSnapshot createEmptySnapshot() {
+    @Override
+    PatientSnapshot createEmptySnapshot() {
         new PatientSnapshot().with {
             it.performedProcedures = [] as Set
             it.plannedProcedures = [] as Set
@@ -222,7 +137,6 @@ class PatientQueryUtil implements QueryUtil {
             it
         }
     }
-
-    //tag::end[]
+//tag::end[]
 }
 //end::end[]

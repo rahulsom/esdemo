@@ -4,38 +4,43 @@ interface Aggregate {
 
 }
 
-interface Event<A extends Aggregate, T> {
+interface Event<A extends Aggregate> {
     A getAggregate()
     abstract String getAudit()
 
     Date getDateCreated()
     String getCreatedBy()
 
-    T getRevertedBy()
-    void setRevertedBy(T revertEventId)
+    Long getRevertedBy()
+    void setRevertedBy(Long revertEventId)
 
-    T getId()
+    Long getId()
 }
 
-interface RevertEvent<A extends Aggregate, T> extends Event<A, T> {
-    Event<A, T> getEvent()
+interface RevertEvent<A extends Aggregate> extends Event<A> {
+    Event<A> getEvent()
 }
 
-interface Deprecates<A extends Aggregate, T> extends Event<A, T> {
-    DeprecatedBy<A, T> getConverse()
+interface Deprecates<A extends Aggregate> extends Event<A> {
+    DeprecatedBy<A> getConverse()
     A getDeprecated()
 }
 
-interface DeprecatedBy<A extends Aggregate, T> extends Event<A, T> {
-    Deprecates<A, T> getConverse()
+interface DeprecatedBy<A extends Aggregate> extends Event<A> {
+    Deprecates<A> getConverse()
     A getDeprecator()
 }
 
 interface Snapshot<A extends Aggregate> {
+    Long getId()
     A getAggregate()
+    void setAggregate(A aggregate)
 
     A getDeprecatedBy()
     void setDeprecatedBy(A aggregate)
+    
+    Long getLastEvent()
+    void setLastEvent(Long id)
 
     Set<A> getDeprecates()
 }
