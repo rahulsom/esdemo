@@ -393,3 +393,13 @@ There are lots of frameworks that perform magic that makes it simpler to use ES 
 * Lagom
 * Concursus
 * ES4j
+
+== Code and slidedeck
+
+[big]##https://github.com/rahulsom/esdemo[github.com/rahulsom/esdemo]##
+
+== Thank you
+
+Please take a few minutes to fill out the survey at http://bit.ly/tiesbrownbag[bit.ly/tiesbrownbag]
+
+image::tiesbrownbag.jpg[]
