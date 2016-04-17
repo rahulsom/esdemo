@@ -2,37 +2,39 @@ package esdemo
 
 class PatientSnapshotJob {
 
-    def patientQueryUtil
+    PatientQueryUtil patientQueryUtil
 
     static triggers = {
         simple repeatInterval: 30000l
     }
 
     def execute() {
-        log.error "Starting..."
+        log.debug "Starting..."
         def threshold = lastEventDate
-        log.error "Threshold is $threshold"
+        log.debug "Threshold is $threshold"
 
         def events = lastEventDate ?
                 PatientEvent.findAllByDateCreatedGreaterThan(lastEventDate) :
                 PatientEvent.list()
 
-        log.error "Aggregating ${events.size()} events"
+        log.debug "Aggregating ${events.size()} events"
 
         def aggregates = events*.aggregate.unique()
-        log.error "Aggregating ${aggregates.size()} aggregates"
+        log.debug "Aggregating ${aggregates.size()} aggregates"
 
         aggregates.each {
-            def snapshot = patientQueryUtil.findPatient(it.identifier, it.authority, Long.MAX_VALUE)
+            def snapshot = patientQueryUtil.computeSnapshot(it, Long.MAX_VALUE)
+            log.debug "Id before save: ${snapshot.id}"
             snapshot.save()
+            log.info "Id after save: ${snapshot.id}"
         }
 
         if (events) {
             def maxTime = events.dateCreated*.time.max()
             new File('build/date.txt').text = maxTime
-            log.error "Done computing snapshots for ${aggregates.size()} aggregates. Last Event was ${new Date(maxTime)}."
+            log.info "Done computing snapshots for ${aggregates.size()} aggregates. Last Event was ${new Date(maxTime)}."
         } else {
-            log.error "No new snapshots"
+            log.debug "No new snapshots"
         }
     }
 

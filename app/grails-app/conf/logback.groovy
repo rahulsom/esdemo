@@ -28,6 +28,7 @@ appender('FILE', RollingFileAppender) {
 root(ERROR, ['STDOUT', 'FILE'])
 
 logger('esdemo', DEBUG)
+logger('grails.app.jobs.esdemo', DEBUG)
 
 
 if (Environment.isDevelopmentMode() && targetDir) {
