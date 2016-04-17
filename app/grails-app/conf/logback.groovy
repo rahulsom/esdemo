@@ -9,7 +9,7 @@ import grails.util.Environment
 // See http://logback.qos.ch/manual/groovy.html for details on configuration
 appender('STDOUT', ConsoleAppender) {
     encoder(PatternLayoutEncoder) {
-        pattern = "%date{HH:mm:ss.SSS} %5level [%15.15t] %25.25logger{5} - %msg%n"
+        pattern = "%date{HH:mm:ss.SSS} %highlight(%-5level) [%15.15t] %25.25logger{5} - %msg%n"
     }
 }
 
