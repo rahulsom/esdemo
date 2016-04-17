@@ -60,3 +60,6 @@ crashlytics-build.properties
 .asscache
 .gradletasknamecache
 
+### Asciidoctor ditaa images
+slidedeck/src/docs/asciidoc/images/diag*.png
+slidedeck/src/docs/asciidoc/images/diag*.png.cache

@@ -339,13 +339,12 @@ Command Query Responsiblity Segregation
 
 [ditaa]
 ----
-                 +--------------+
-                 |              |
-                 |              <--------+
-        +--------+    Client    |        |
-        |        |              +---+    |
-        |        +--------------+   |    |Snapshots
-Commands|                    Queries|    |
+                +---------------+
+                |               |<-------+
+        +-------+     Client    |        |
+        |       |               +---+    |
+        |       +---------------+   |    |Snapshots
+Commands|                    Queries|    :
         v                           v    |
   +-----+-------+               +---+----+-----+
   |             |               |              |
@@ -355,9 +354,8 @@ Commands|                    Queries|    |
         |                 DB Queries|    ^
         |                           |    |Events
   Events|       +---------------+   |    |
-        |       |               |   |    |
-        |       |               <---+    |
-        +------->   Datastore   |        |
+        |       |               |<--+    :
+        +------>|{s}Datastore   |        |
                 |               +--------+
                 +---------------+
 ----
