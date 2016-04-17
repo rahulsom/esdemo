@@ -32,6 +32,7 @@ repositories {
 dependencies {
     gems 'rubygems:slim:3.0.6'
     gems 'rubygems:thread_safe:0.3.5'
+    gems 'rubygems:asciidoctor-diagram:1.2.0'
 }
 
 task download << {
@@ -64,7 +65,7 @@ copyTheme.inputs.dir file('build/asciidoc/revealjs/reveal.js/css/theme')
 
 asciidoctor {
 
-    dependsOn jrubyPrepare
+    dependsOn jrubyPrepare, download, copyTheme
 
     sources {
         include 'index.adoc'
@@ -99,5 +100,7 @@ asciidoctor {
 
     options template_dirs : [new File(templateDir,'templates/slim').absolutePath ]
 
-    dependsOn download, copyTheme
+    requires = ['asciidoctor-diagram']
+
+    gemPath = jrubyPrepare.outputDir
 }

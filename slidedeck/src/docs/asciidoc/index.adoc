@@ -218,6 +218,11 @@ S_K = S_0 + sum_(i=1)^K E_i
 S_N = S_K + sum_(i=K+1)^N E_i
 ++++
 
+[stem]
+++++
+AA K < N
+++++
+
 === This works, but not always
 
 It assumes that events are applied Left to Right.
@@ -330,6 +335,33 @@ Obviously, you don't want to perform event computation everywhere
 
 Command Query Responsiblity Segregation
 
+=== CQRS (2)
+
+[ditaa]
+----
+                 +--------------+
+                 |              |
+                 |              <--------+
+        +--------+    Client    |        |
+        |        |              +---+    |
+        |        +--------------+   |    |Snapshots
+Commands|                    Queries|    |
+        v                           v    |
+  +-----+-------+               +---+----+-----+
+  |             |               |              |
+  | Command Util|               |  Query Util  |
+  |             |               |              |
+  +-----+-------+               +---+----+-----+
+        |                 DB Queries|    ^
+        |                           |    |Events
+  Events|       +---------------+   |    |
+        |       |               |   |    |
+        |       |               <---+    |
+        +------->   Datastore   |        |
+                |               +--------+
+                +---------------+
+----
+
 === Patient Command Util
 
 [source,groovy]
@@ -382,7 +414,7 @@ Solve for `x`
 [%step]
 * Database size for snapshots and events
 * Single table vs multi table inheritance
-* RDBMS vs Cassandra
+* RDBMS vs Schemaless. Also PG and ORA can manage JSON for you.
 * REST APIs and the knapsack problem
 * Search vs Sort
 
@@ -393,6 +425,7 @@ There are lots of frameworks that perform magic that makes it simpler to use ES 
 * Lagom
 * Concursus
 * ES4j
+* Eventuate
 
 == Code and slidedeck
 
