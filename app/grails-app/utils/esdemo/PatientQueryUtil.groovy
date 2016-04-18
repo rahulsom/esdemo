@@ -1,9 +1,11 @@
 package esdemo
 
 import grails.compiler.GrailsCompileStatic
-import groovy.transform.TailRecursive
 import groovy.util.logging.Slf4j
 import org.springframework.stereotype.Component
+
+import static esdemo.EventApplyOutcome.CONTINUE
+import static esdemo.EventApplyOutcome.RETURN
 
 /**
  * Provides capability to obtain a snapshot of a Patient
@@ -47,65 +49,46 @@ class PatientQueryUtil implements QueryUtil<PatientAggregate, PatientEvent, Pati
                         aggregate, lastSnapshot?.lastEvent ?: 0L, lastEvent, INCREMENTAL)
     }
 
+    EventApplyOutcome applyEvent(PatientCreated event, PatientSnapshot snapshot) {
+        snapshot.name = event.name
+        CONTINUE
+    }
+
+    EventApplyOutcome applyEvent(PatientNameChanged event, PatientSnapshot snapshot) {
+        snapshot.name = event.name
+        CONTINUE
+    }
+
+    EventApplyOutcome applyEvent(PatientProcedurePlanned planned, PatientSnapshot snapshot) {
+        def match = snapshot.plannedProcedures?.find { it.code == planned.code }
+        if (!match) {
+            snapshot.addToPlannedProcedures(code: planned.code, datePlanned: planned.dateCreated)
+        }
+        CONTINUE
+    }
+
+    EventApplyOutcome applyEvent(PatientProcedurePerformed performed, PatientSnapshot snapshot) {
+        def match = snapshot.plannedProcedures?.find { it.code == performed.code }
+        if (match) {
+            snapshot.removeFromPlannedProcedures(match)
+        }
+        snapshot.addToPerformedProcedures(code: performed.code, datePerformed: performed.dateCreated)
+        CONTINUE
+    }
+
+    EventApplyOutcome applyEvent(PatientDeleted event, PatientSnapshot snapshot) {
+        snapshot.deleted = true
+        RETURN
+    }
+
     @Override
-    @TailRecursive
-    PatientSnapshot applyEvents(
-            PatientSnapshot snapshot, List<? extends Event<PatientAggregate>> events,
-            List<? extends Deprecates<PatientAggregate>> deprecatesList, List<PatientAggregate> aggregates) {
-        if (events.empty || snapshot.deleted) {
-            return snapshot
-        }
-        def firstEvent = events.head()
-        def remainingEvents = events.tail()
+    List<PatientEvent> findEventsForAggregates(List<PatientAggregate> aggregates) {
+        PatientEvent.findAllByAggregateInList(aggregates, INCREMENTAL) as List<? extends PatientEvent>
+    }
 
-        log.debug "    --> Event: $firstEvent"
-        switch (firstEvent) {
-            case PatientCreated:
-                snapshot.name = (firstEvent as PatientCreated).name
-                return applyEvents(snapshot, remainingEvents, deprecatesList, aggregates)
-            case PatientNameChanged:
-                snapshot.name = (firstEvent as PatientNameChanged).name
-                return applyEvents(snapshot, remainingEvents, deprecatesList, aggregates)
-            case PatientProcedurePlanned:
-                def planned = firstEvent as PatientProcedurePlanned
-                def match = snapshot.plannedProcedures?.find { it.code == planned.code }
-                if (!match) {
-                    snapshot.addToPlannedProcedures(code: planned.code, datePlanned: planned.dateCreated)
-                }
-                return applyEvents(snapshot, remainingEvents, deprecatesList, aggregates)
-            case PatientProcedurePerformed:
-                def performed = firstEvent as PatientProcedurePerformed
-                def match = snapshot.plannedProcedures?.find { it.code == performed.code }
-                if (match) {
-                    snapshot.removeFromPlannedProcedures(match)
-                }
-                snapshot.addToPerformedProcedures(code: performed.code, datePerformed: performed.dateCreated)
-                return applyEvents(snapshot, remainingEvents, deprecatesList, aggregates)
-            case PatientDeleted:
-                snapshot.deleted = true
-                return snapshot
-            case PatientDeprecates:
-                def deprecated = firstEvent as PatientDeprecates
-                def newSnapshot = createEmptySnapshot()
-                newSnapshot.aggregate = deprecated.aggregate
-
-                def otherPatient = deprecated.deprecated
-                newSnapshot.addToDeprecates(identifier: otherPatient.identifier, authority: otherPatient.authority)
-
-                def allEvents = PatientEvent.findAllByAggregateInList(
-                        aggregates + [deprecated.deprecated], INCREMENTAL) as List<? extends PatientEvent>
-
-                def sortedEvents = allEvents.
-                        findAll { it.id != deprecated.id && it.id != deprecated.converse.id }.
-                        toSorted { a, b -> (a.dateCreated.time - b.dateCreated.time) as int }
-
-                log.info "Sorted Events: [\n    ${sortedEvents.join(',\n    ')}\n]"
-
-                def forwardEventsSortedBackwards = applyReverts(sortedEvents.reverse())
-                return applyEvents(newSnapshot, forwardEventsSortedBackwards.reverse(), deprecatesList + [deprecated], aggregates)
-            default:
-                throw new IllegalArgumentException("This kind of event is not supported - ${firstEvent.class}")
-        }
+    @Override
+    boolean shouldEventsBeApplied(PatientSnapshot snapshot) {
+        !snapshot.deleted
     }
 
     @Override
@@ -118,14 +101,14 @@ class PatientQueryUtil implements QueryUtil<PatientAggregate, PatientEvent, Pati
             return null
         }
 
-        def lastSnapshot = snapshots[0] as PatientSnapshot
+        snapshots[0] as PatientSnapshot
+    }
 
-        if (lastSnapshot.isAttached()) {
-            lastSnapshot.discard()
-            lastSnapshot.id = null
+    void detachSnapshot(PatientSnapshot retval) {
+        if (retval.isAttached()) {
+            retval.discard()
+            retval.id = null
         }
-
-        lastSnapshot
     }
 
     @Override
@@ -136,6 +119,11 @@ class PatientQueryUtil implements QueryUtil<PatientAggregate, PatientEvent, Pati
             it.deprecates = [] as Set
             it
         }
+    }
+
+    @Override
+    void addToDeprecates(PatientSnapshot snapshot, PatientAggregate otherAggregate) {
+        snapshot.addToDeprecates(identifier: otherAggregate.identifier, authority: otherAggregate.authority)
     }
 //tag::end[]
 }

@@ -33,6 +33,12 @@ class PatientSnapshot implements Snapshot<PatientAggregate> {
         deprecatedBy nullable: true
     }
 
+    static mapping = {
+        plannedProcedures lazy: false
+        performedProcedures lazy: false
+        deprecates lazy: false
+    }
+
     @Override
     public String toString() {
         return """\
@@ -43,7 +49,8 @@ class PatientSnapshot implements Snapshot<PatientAggregate> {
                 otherIds=$deprecates,
                 aggregate=$aggregate,
                 lastEvent=$lastEvent,
-                name='$name'
+                name='$name',
+                deprecatedBy=$deprecatedBy
             }""".stripIndent()
     }
 //tag::close[]
@@ -51,24 +58,34 @@ class PatientSnapshot implements Snapshot<PatientAggregate> {
 //end::close[]
 
 class PlannedProcedure {
+
+    static belongsTo = [
+            patientSnapshot: PatientSnapshot
+    ]
     String code
     String datePlanned
-
 
     @Override
     public String toString() { "PlannedProcedure{id=$id, code='$code', datePlanned='$datePlanned'}" }
 }
 
 class PerformedProcedure {
+
+    static belongsTo = [
+            patientSnapshot: PatientSnapshot
+    ]
     String code
     String datePerformed
-
 
     @Override
     public String toString() { return "PerformedProcedure{id=$id, datePerformed='$datePerformed', code='$code'}" }
 }
 
 class DeprecatedPatient {
+
+    static belongsTo = [
+            patientSnapshot: PatientSnapshot
+    ]
     String identifier
     String authority
 

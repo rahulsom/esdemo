@@ -48,6 +48,10 @@ class PatientController {
 
         def events = PatientEvent.findAllByAggregateInListAndIdLessThanEquals(
                 allAggregates, lastVersion, REVERSE_ORDER) as List<? extends PatientEvent>
+
+        log.error "AllAggregates: $allAggregates"
+        log.error "LastVersion: $lastVersion"
+        log.error "Events: $events"
         events.each { event ->
             if (event instanceof PatientEventReverted && event.revertedBy == null) {
                 (event as PatientEventReverted).event.revertedBy = event.id

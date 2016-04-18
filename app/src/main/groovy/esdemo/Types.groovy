@@ -44,3 +44,7 @@ interface Snapshot<A extends Aggregate> {
 
     Set<A> getDeprecates()
 }
+
+enum EventApplyOutcome {
+    RETURN, CONTINUE,
+}

@@ -3,12 +3,14 @@ package esdemo
 import grails.util.Pair
 import groovy.transform.CompileStatic
 import groovy.transform.TailRecursive
+import groovy.transform.TypeCheckingMode
+import org.grails.orm.hibernate.cfg.GrailsHibernateUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 @CompileStatic
 trait QueryUtil<A extends Aggregate, E extends Event<A>, S extends Snapshot<A>> {
-    Logger log = LoggerFactory.getLogger(getClass())
+    private Logger log = LoggerFactory.getLogger(getClass())
 
     abstract S createEmptySnapshot()
 
@@ -21,24 +23,17 @@ trait QueryUtil<A extends Aggregate, E extends Event<A>, S extends Snapshot<A>> 
      */
     abstract S maybeGetSnapshot(long startWithEvent, A aggregate)
 
-    S getLatestSnapshot(A aggregate, long startWithEvent) {
+    abstract void detachSnapshot(S retval)
+
+    private S getLatestSnapshot(A aggregate, long startWithEvent) {
 
         S lastSnapshot = maybeGetSnapshot(startWithEvent, aggregate) ?: createEmptySnapshot()
 
         log.info "    --> Last Snapshot: ${lastSnapshot.id ? lastSnapshot : '<none>'}"
+        detachSnapshot(lastSnapshot)
 
         lastSnapshot.aggregate = aggregate
         lastSnapshot
-    }
-
-    /**
-     * Applies all revert events from a list and returns the list with only valid forward events
-     *
-     * @param events list of events
-     * @return
-     */
-    List<E> applyReverts(List<E> events) {
-        applyReverts(events, [])
     }
 
     /**
@@ -49,7 +44,7 @@ trait QueryUtil<A extends Aggregate, E extends Event<A>, S extends Snapshot<A>> 
      * @return
      */
     @TailRecursive
-    List<E> applyReverts(List<E> events, List<E> accumulator) {
+    private List<E> applyReverts(List<E> events, List<E> accumulator) {
         if (!events) {
             return accumulator
         }
@@ -75,51 +70,117 @@ trait QueryUtil<A extends Aggregate, E extends Event<A>, S extends Snapshot<A>> 
      * @param lastEventInSnapshot
      * @return
      */
-    Pair<S, List<E>> getSnapshotAndEventsSince(A aggregate, long lastEventInSnapshot) {
+    private Pair<S, List<E>> getSnapshotAndEventsSince(A aggregate, long lastEventInSnapshot) {
         getSnapshotAndEventsSince(aggregate, lastEventInSnapshot, lastEventInSnapshot)
     }
 
-    Pair<S, List<E>> getSnapshotAndEventsSince(A aggregate, long lastEventInSnapshot, long lastEvent) {
-        def lastSnapshot = getLatestSnapshot(aggregate, lastEventInSnapshot)
+    private Pair<S, List<E>> getSnapshotAndEventsSince(A aggregate, long lastEventInSnapshot, long lastEvent) {
+        if (lastEventInSnapshot) {
+            def lastSnapshot = getLatestSnapshot(aggregate, lastEventInSnapshot)
 
-        List<E> uncomputedEvents = getUncomputedEvents(aggregate, lastSnapshot, lastEvent)
+            List<E> uncomputedEvents = getUncomputedEvents(aggregate, lastSnapshot, lastEvent)
+            def uncomputedReverts = uncomputedEvents.findAll { it instanceof RevertEvent<A> } as List<RevertEvent>
 
-        def uncomputedReverts = uncomputedEvents.findAll { it instanceof RevertEvent<A> } as List<RevertEvent>
-
-        def oldestRevertedEvent = ((uncomputedReverts*.event*.id) as List<Long>).min()
-        log.info "Oldest reverted event: $oldestRevertedEvent"
-        if (uncomputedReverts && oldestRevertedEvent <= lastSnapshot.lastEvent) {
-            log.info "Uncomputed reverts exist: $uncomputedEvents"
-            getSnapshotAndEventsSince(aggregate, oldestRevertedEvent, lastEvent)
+            if (uncomputedReverts) {
+                log.info "Uncomputed reverts exist: ${uncomputedEvents}"
+                getSnapshotAndEventsSince(aggregate, 0, lastEvent)
+            } else {
+                log.info "Events in pair: ${uncomputedEvents}"
+                if (uncomputedEvents) {
+                    lastSnapshot.lastEvent = uncomputedEvents*.id.max()
+                }
+                new Pair(lastSnapshot, uncomputedEvents)
+            }
         } else {
-            log.info "Event Ids in pair: ${uncomputedEvents*.id}"
+            def lastSnapshot = createEmptySnapshot()
+
+            List<E> uncomputedEvents = getUncomputedEvents(aggregate, lastSnapshot, lastEvent)
+
+            log.info "Events in pair: ${uncomputedEvents*.id}"
             if (uncomputedEvents) {
                 lastSnapshot.lastEvent = uncomputedEvents*.id.max()
             }
             new Pair(lastSnapshot, uncomputedEvents)
         }
+
     }
 
     abstract List<E> getUncomputedEvents(A aggregate, S lastSnapshot, long lastEvent)
 
-    abstract S applyEvents(S snapshot, List<? extends Event<A>> events, List<? extends Deprecates<A>> deprecatesList, List<A> aggregates)
+    abstract boolean shouldEventsBeApplied(S snapshot)
 
-    S computeSnapshot(A aggregate, long lastEvent) {
-        Pair<S, List<E>> sePair = getSnapshotAndEventsSince(aggregate, lastEvent)
+    abstract List<E> findEventsForAggregates(List<A> aggregates)
 
-        List<E> forwardEventsSortedBackwards = applyReverts(sePair.bValue.reverse())
-        def deprecator = forwardEventsSortedBackwards.find { it instanceof DeprecatedBy<A> } as DeprecatedBy<A>
+    @TailRecursive
+    private S applyEvents(S snapshot, List<E> events, List deprecatesList, List<A> aggregates) {
+        if (events.empty || !shouldEventsBeApplied(snapshot)) {
+            return snapshot
+        }
+        def event = events.head()
+        def remainingEvents = events.tail()
 
-        if (deprecator) {
-            def snapshot = createEmptySnapshot()
-            snapshot.deprecatedBy = deprecator.deprecator
+        log.debug "    --> Event: $event"
+
+        if (event instanceof Deprecates<A>) {
+            def deprecatesEvent = event as Deprecates<A>
+            def newSnapshot = createEmptySnapshot()
+            newSnapshot.aggregate = deprecatesEvent.aggregate
+
+            def otherAggregate = deprecatesEvent.deprecated
+            addToDeprecates(newSnapshot, otherAggregate)
+
+            def allEvents = findEventsForAggregates(aggregates + deprecatesEvent.deprecated)
+
+            def sortedEvents = allEvents.
+                    findAll { it.id != deprecatesEvent.id && it.id != deprecatesEvent.converse.id }.
+                    toSorted { a, b -> (a.dateCreated.time - b.dateCreated.time) as int }
+
+            log.info "Sorted Events: [\n    ${sortedEvents.join(',\n    ')}\n]"
+
+            def forwardEventsSortedBackwards = applyReverts(sortedEvents.reverse(), [] as List<E>)
+            applyEvents(newSnapshot, forwardEventsSortedBackwards.reverse(), deprecatesList + deprecatesEvent, aggregates)
+        } else if (event instanceof DeprecatedBy<A>) {
+            def deprecatedByEvent = event as DeprecatedBy<A>
+            def newAggregate = deprecatedByEvent.deprecator
+            snapshot.deprecatedBy = newAggregate
             snapshot
         } else {
-            S value = sePair.aValue as S
-            def retval = applyEvents(value, forwardEventsSortedBackwards.reverse(), [], [aggregate])
-            log.info "  --> Computed: $retval"
-            retval
+            def methodName = "applyEvent".toString()
+            def retval = callMethod(methodName, snapshot, event)
+            if (retval == EventApplyOutcome.CONTINUE) {
+                applyEvents(snapshot as S, remainingEvents as List<E>, deprecatesList, aggregates as List<A>)
+            } else if (retval == EventApplyOutcome.RETURN) {
+                snapshot
+            } else {
+                throw new Exception("Unexpected value from calling '$methodName'")
+            }
         }
+    }
+
+    abstract void addToDeprecates(S snapshot, A otherAggregate)
+
+    @CompileStatic(TypeCheckingMode.SKIP)
+    private EventApplyOutcome callMethod(String methodName, S snapshot, E event) {
+        this."${methodName}"(GrailsHibernateUtil.unwrapIfProxy(event), snapshot) as EventApplyOutcome
+    }
+
+    S computeSnapshot(A aggregate, long lastEvent) {
+
+        Pair<S, List<E>> sePair = getSnapshotAndEventsSince(aggregate, lastEvent)
+        def events = sePair.bValue as List<E>
+        def snapshot = sePair.aValue as S
+
+        if (events.any { it instanceof RevertEvent<A> } && snapshot.aggregate) {
+            return null
+        }
+        snapshot.aggregate = aggregate
+
+        List<E> forwardEventsSortedBackwards = applyReverts(events.reverse(), [] as List<E>)
+        assert !forwardEventsSortedBackwards.find { it instanceof RevertEvent<A> }
+
+        def retval = applyEvents(snapshot, forwardEventsSortedBackwards.reverse(), [], [aggregate])
+        log.info "  --> Computed: $retval"
+        retval
     }
 
 }

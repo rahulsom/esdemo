@@ -2,7 +2,7 @@ package esdemo
 
 class PatientSnapshotJob {
 
-    PatientQueryUtil patientQueryUtil
+    def patientQueryUtil
 
     static triggers = {
         simple repeatInterval: 30000l

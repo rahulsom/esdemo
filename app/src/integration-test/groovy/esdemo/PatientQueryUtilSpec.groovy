@@ -14,7 +14,7 @@ import static esdemo.PatientCommandUtil.*
 @Slf4j
 class PatientQueryUtilSpec extends Specification {
 
-    def patientQueryUtil
+    PatientQueryUtil patientQueryUtil
 
     def "Patient is created"() {
         when: "I create a patient"
@@ -183,7 +183,7 @@ class PatientQueryUtilSpec extends Specification {
 
         then: "There should be one planned procedure and one performed procedure"
         s1.plannedProcedures.size() == 0
-        s1.performedProcedures.size() == 0
+        s1.performedProcedures.size() == 1
         s1.deprecatedBy == p2
 
         when: "I find the deprecating patient"
@@ -214,7 +214,7 @@ class PatientQueryUtilSpec extends Specification {
             performProcedure p2, 'FLUSHOT'
         }
 
-        then:"There should be 6 events"
+        then: "There should be 6 events"
         PatientEvent.count() == 6
 
         when: "I merge"
@@ -224,6 +224,73 @@ class PatientQueryUtilSpec extends Specification {
         m1 != null
         m1.converse != null
         PatientEvent.count() == 8
+
+        when: "I revert the merge"
+        def m2 = As('rahul') { revertEvent m1 }
+
+        then: "The merge should be valid"
+        m2 != null
+        PatientEvent.count() == 10
+
+        when: "I find the deprecated patient"
+        log.info "Loading deprecated patient"
+        def s1 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
+
+        then: "There should be one planned procedure and one performed procedure"
+        s1.plannedProcedures.size() == 0
+        s1.performedProcedures.size() == 1
+        s1.deprecatedBy == null
+
+        when: "I find the deprecating patient"
+        def s2 = patientQueryUtil.findPatient '42', '1.2.3.4', Long.MAX_VALUE
+
+        then: "There should be one planned procedure and one performed procedure"
+        s2.plannedProcedures.size() == 1
+        s2.performedProcedures.size() == 1
+        s2.deprecatedBy == null
+        s2.deprecates.size() == 0
+    }
+
+    def "Merge can be reverted after snapshotting"() {
+        when: "I create a patient"
+        def p1 = As('rahul') { createPatient '123', '1.2.3.4', 'john' }
+        As('rahul') {
+            planProcedure p1, 'FLUSHOT'
+            performProcedure p1, 'FLUSHOT'
+        }
+
+        and: "Create another patient"
+        def p2 = As('rahul') { createPatient '42', '1.2.3.4', 'John' }
+        As('rahul') {
+            planProcedure p2, 'APPENDECTOMY'
+            performProcedure p2, 'FLUSHOT'
+        }
+
+        then: "There should be 6 events"
+        PatientEvent.count() == 6
+
+        when: "I merge"
+        def m1 = As('rahul') { merge(p1, p2) }
+
+        then: "Merge should be valid"
+        m1 != null
+        m1.converse != null
+        PatientEvent.count() == 8
+
+        when: "I inspect the deprecated patient"
+        def dep = patientQueryUtil.findPatient('123', '1.2.3.4', Long.MAX_VALUE)
+
+        then: "It is deprecated"
+        dep.deprecatedBy != null
+        dep.name == 'john'
+        dep.aggregate == p1
+
+        when: "I snapshot the patients"
+        patientQueryUtil.findPatient('123', '1.2.3.4', Long.MAX_VALUE).save(flush: true, failOnError: true)
+        patientQueryUtil.findPatient('42', '1.2.3.4', Long.MAX_VALUE).save(flush: true, failOnError: true)
+
+        then: "There should be 2 snapshots"
+        PatientSnapshot.count() == 2
 
         when: "I revert the merge"
         def m2 = As('rahul') { revertEvent m1 }
