@@ -1,11 +1,15 @@
 package esdemo
 
+import com.github.rahulsom.es4g.annotations.Query
+import com.github.rahulsom.es4g.api.EventApplyOutcome
+import com.github.rahulsom.es4g.api.QueryUtil
 import grails.compiler.GrailsCompileStatic
 import groovy.util.logging.Slf4j
+import org.grails.orm.hibernate.cfg.GrailsHibernateUtil
 import org.springframework.stereotype.Component
 
-import static esdemo.EventApplyOutcome.CONTINUE
-import static esdemo.EventApplyOutcome.RETURN
+import static com.github.rahulsom.es4g.api.EventApplyOutcome.CONTINUE
+import static com.github.rahulsom.es4g.api.EventApplyOutcome.RETURN
 
 /**
  * Provides capability to obtain a snapshot of a Patient
@@ -16,6 +20,7 @@ import static esdemo.EventApplyOutcome.RETURN
 @Slf4j
 @Component
 // tag::begin[]
+@Query(aggregate = PatientAggregate, snapshot = PatientSnapshot)
 class PatientQueryUtil implements QueryUtil<PatientAggregate, PatientEvent, PatientSnapshot> {
 // end::begin[]
 
@@ -37,7 +42,7 @@ class PatientQueryUtil implements QueryUtil<PatientAggregate, PatientEvent, Pati
         log.info "Identifier: $identifier, Authority: $authority"
         PatientAggregate aggregate = PatientAggregate.findByIdentifierAndAuthority(identifier, authority)
         log.info "  --> Aggregate: $aggregate"
-        computeSnapshot(aggregate, lastEvent)
+        computeSnapshot(aggregate, lastEvent).orElse(null)
         //tag::endMethod[]
     }
     //end::endMethod[]
@@ -49,17 +54,17 @@ class PatientQueryUtil implements QueryUtil<PatientAggregate, PatientEvent, Pati
                         aggregate, lastSnapshot?.lastEvent ?: 0L, lastEvent, INCREMENTAL)
     }
 
-    EventApplyOutcome applyEvent(PatientCreated event, PatientSnapshot snapshot) {
+    EventApplyOutcome applyPatientCreated(PatientCreated event, PatientSnapshot snapshot) {
         snapshot.name = event.name
         CONTINUE
     }
 
-    EventApplyOutcome applyEvent(PatientNameChanged event, PatientSnapshot snapshot) {
+    EventApplyOutcome applyPatientNameChanged(PatientNameChanged event, PatientSnapshot snapshot) {
         snapshot.name = event.name
         CONTINUE
     }
 
-    EventApplyOutcome applyEvent(PatientProcedurePlanned planned, PatientSnapshot snapshot) {
+    EventApplyOutcome applyPatientProcedurePlanned(PatientProcedurePlanned planned, PatientSnapshot snapshot) {
         def match = snapshot.plannedProcedures?.find { it.code == planned.code }
         if (!match) {
             snapshot.addToPlannedProcedures(code: planned.code, datePlanned: planned.dateCreated)
@@ -67,7 +72,7 @@ class PatientQueryUtil implements QueryUtil<PatientAggregate, PatientEvent, Pati
         CONTINUE
     }
 
-    EventApplyOutcome applyEvent(PatientProcedurePerformed performed, PatientSnapshot snapshot) {
+    EventApplyOutcome applyPatientProcedurePerformed(PatientProcedurePerformed performed, PatientSnapshot snapshot) {
         def match = snapshot.plannedProcedures?.find { it.code == performed.code }
         if (match) {
             snapshot.removeFromPlannedProcedures(match)
@@ -76,7 +81,7 @@ class PatientQueryUtil implements QueryUtil<PatientAggregate, PatientEvent, Pati
         CONTINUE
     }
 
-    EventApplyOutcome applyEvent(PatientDeleted event, PatientSnapshot snapshot) {
+    EventApplyOutcome applyPatientDeleted(PatientDeleted event, PatientSnapshot snapshot) {
         snapshot.deleted = true
         RETURN
     }
@@ -92,18 +97,15 @@ class PatientQueryUtil implements QueryUtil<PatientAggregate, PatientEvent, Pati
     }
 
     @Override
-    PatientSnapshot maybeGetSnapshot(long startWithEvent, PatientAggregate aggregate) {
+    Optional<PatientSnapshot> getSnapshot(long startWithEvent, PatientAggregate aggregate) {
         def snapshots = startWithEvent == Long.MAX_VALUE ?
                 PatientSnapshot.findAllByAggregate(aggregate, LATEST) :
                 PatientSnapshot.findAllByAggregateAndLastEventLessThan(aggregate, startWithEvent, LATEST)
 
-        if (!snapshots) {
-            return null
-        }
-
-        snapshots[0] as PatientSnapshot
+        (snapshots ? Optional.of(snapshots[0]) : Optional.empty()) as Optional<PatientSnapshot>
     }
 
+    @Override
     void detachSnapshot(PatientSnapshot retval) {
         if (retval.isAttached()) {
             retval.discard()
@@ -124,6 +126,11 @@ class PatientQueryUtil implements QueryUtil<PatientAggregate, PatientEvent, Pati
     @Override
     void addToDeprecates(PatientSnapshot snapshot, PatientAggregate otherAggregate) {
         snapshot.addToDeprecates(identifier: otherAggregate.identifier, authority: otherAggregate.authority)
+    }
+
+    @Override
+    PatientEvent unwrapIfProxy(PatientEvent event) {
+        GrailsHibernateUtil.unwrapIfProxy(event) as PatientEvent
     }
 //tag::end[]
 }

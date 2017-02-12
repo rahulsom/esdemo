@@ -1,1 +1,1 @@
-include 'app', 'slidedeck'
+include 'app', 'api', 'slidedeck'

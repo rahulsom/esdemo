@@ -1,0 +1,23 @@
+package com.github.rahulsom.es4g.gdsl
+
+import com.intellij.patterns.PsiJavaPatterns
+import com.intellij.patterns.PlatformPatterns
+
+//get the context of all files, and enable path matching. Note: Don't change anything in context here.
+def ctx = context(
+        ctype: PsiJavaPatterns.psiClass().withName(PlatformPatterns.string().matches(/.*/))
+)
+
+contributor(ctx) {
+    def path = ""
+    try {
+        path = psiClass.containingFile.originalFile.virtualFile.path
+    } catch (Exception e) {
+    }
+
+    //Check for Path pattern here
+    if (path =~ ".*/*grails-app/controllers/.*") {
+        //Contribute to matching classes here.
+        method(name: 'foo', type:'void', params: [:])
+    }
+}

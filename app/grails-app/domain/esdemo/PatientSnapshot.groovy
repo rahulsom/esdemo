@@ -1,5 +1,6 @@
 package esdemo
 
+import com.github.rahulsom.es4g.api.Snapshot
 import groovy.transform.ToString
 
 /**

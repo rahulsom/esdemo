@@ -1,10 +1,8 @@
-package esdemo
+package com.github.rahulsom.es4g.api
 
-import grails.util.Pair
 import groovy.transform.CompileStatic
 import groovy.transform.TailRecursive
 import groovy.transform.TypeCheckingMode
-import org.grails.orm.hibernate.cfg.GrailsHibernateUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -21,13 +19,12 @@ trait QueryUtil<A extends Aggregate, E extends Event<A>, S extends Snapshot<A>> 
      * @param aggregate
      * @return
      */
-    abstract S maybeGetSnapshot(long startWithEvent, A aggregate)
+    abstract Optional<S> getSnapshot(long startWithEvent, A aggregate)
 
     abstract void detachSnapshot(S retval)
 
     private S getLatestSnapshot(A aggregate, long startWithEvent) {
-
-        S lastSnapshot = maybeGetSnapshot(startWithEvent, aggregate) ?: createEmptySnapshot()
+        S lastSnapshot = getSnapshot(startWithEvent, aggregate).orElse(createEmptySnapshot()) as S
 
         log.info "    --> Last Snapshot: ${lastSnapshot.id ? lastSnapshot : '<none>'}"
         detachSnapshot(lastSnapshot)
@@ -70,11 +67,11 @@ trait QueryUtil<A extends Aggregate, E extends Event<A>, S extends Snapshot<A>> 
      * @param lastEventInSnapshot
      * @return
      */
-    private Pair<S, List<E>> getSnapshotAndEventsSince(A aggregate, long lastEventInSnapshot) {
+    private Tuple2<S, List<E>> getSnapshotAndEventsSince(A aggregate, long lastEventInSnapshot) {
         getSnapshotAndEventsSince(aggregate, lastEventInSnapshot, lastEventInSnapshot)
     }
 
-    private Pair<S, List<E>> getSnapshotAndEventsSince(A aggregate, long lastEventInSnapshot, long lastEvent) {
+    private Tuple2<S, List<E>> getSnapshotAndEventsSince(A aggregate, long lastEventInSnapshot, long lastEvent) {
         if (lastEventInSnapshot) {
             def lastSnapshot = getLatestSnapshot(aggregate, lastEventInSnapshot)
 
@@ -85,11 +82,11 @@ trait QueryUtil<A extends Aggregate, E extends Event<A>, S extends Snapshot<A>> 
                 log.info "Uncomputed reverts exist: ${uncomputedEvents}"
                 getSnapshotAndEventsSince(aggregate, 0, lastEvent)
             } else {
-                log.info "Events in pair: ${uncomputedEvents}"
+                log.info "Events in pair: ${uncomputedEvents*.id}"
                 if (uncomputedEvents) {
                     lastSnapshot.lastEvent = uncomputedEvents*.id.max()
                 }
-                new Pair(lastSnapshot, uncomputedEvents)
+                new Tuple2(lastSnapshot, uncomputedEvents)
             }
         } else {
             def lastSnapshot = createEmptySnapshot()
@@ -100,7 +97,7 @@ trait QueryUtil<A extends Aggregate, E extends Event<A>, S extends Snapshot<A>> 
             if (uncomputedEvents) {
                 lastSnapshot.lastEvent = uncomputedEvents*.id.max()
             }
-            new Pair(lastSnapshot, uncomputedEvents)
+            new Tuple2(lastSnapshot, uncomputedEvents)
         }
 
     }
@@ -145,7 +142,7 @@ trait QueryUtil<A extends Aggregate, E extends Event<A>, S extends Snapshot<A>> 
             snapshot.deprecatedBy = newAggregate
             snapshot
         } else {
-            def methodName = "applyEvent".toString()
+            def methodName = "apply${event.class.simpleName}".toString()
             def retval = callMethod(methodName, snapshot, event)
             if (retval == EventApplyOutcome.CONTINUE) {
                 applyEvents(snapshot as S, remainingEvents as List<E>, deprecatesList, aggregates as List<A>)
@@ -161,17 +158,19 @@ trait QueryUtil<A extends Aggregate, E extends Event<A>, S extends Snapshot<A>> 
 
     @CompileStatic(TypeCheckingMode.SKIP)
     private EventApplyOutcome callMethod(String methodName, S snapshot, E event) {
-        this."${methodName}"(GrailsHibernateUtil.unwrapIfProxy(event), snapshot) as EventApplyOutcome
+        this."${methodName}"(unwrapIfProxy(event), snapshot) as EventApplyOutcome
     }
 
-    S computeSnapshot(A aggregate, long lastEvent) {
+    abstract E unwrapIfProxy(E event)
 
-        Pair<S, List<E>> sePair = getSnapshotAndEventsSince(aggregate, lastEvent)
-        def events = sePair.bValue as List<E>
-        def snapshot = sePair.aValue as S
+    Optional<S> computeSnapshot(A aggregate, long lastEvent) {
+
+        Tuple2<S, List<E>> seTuple2 = getSnapshotAndEventsSince(aggregate, lastEvent)
+        def events = seTuple2.second as List<E>
+        def snapshot = seTuple2.first as S
 
         if (events.any { it instanceof RevertEvent<A> } && snapshot.aggregate) {
-            return null
+            return Optional.empty()
         }
         snapshot.aggregate = aggregate
 
@@ -180,7 +179,7 @@ trait QueryUtil<A extends Aggregate, E extends Event<A>, S extends Snapshot<A>> 
 
         def retval = applyEvents(snapshot, forwardEventsSortedBackwards.reverse(), [], [aggregate])
         log.info "  --> Computed: $retval"
-        retval
+        Optional.of(retval)
     }
 
 }

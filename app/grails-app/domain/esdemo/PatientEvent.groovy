@@ -1,5 +1,9 @@
 package esdemo
 
+import com.github.rahulsom.es4g.api.DeprecatedBy
+import com.github.rahulsom.es4g.api.Deprecates
+import com.github.rahulsom.es4g.api.Event
+import com.github.rahulsom.es4g.api.RevertEvent
 import groovy.json.JsonBuilder
 
 /**
@@ -40,6 +44,7 @@ abstract class PatientEvent implements Event<PatientAggregate> {
  * @author Rahul Somasunderam
  */
 //tag::created[]
+@com.github.rahulsom.es4g.annotations.Event(PatientAggregate)
 class PatientCreated extends PatientEvent {
     String name
 
@@ -51,6 +56,7 @@ class PatientCreated extends PatientEvent {
 /**
  * Indicates the name changed for a patient
  */
+@com.github.rahulsom.es4g.annotations.Event(PatientAggregate)
 class PatientNameChanged extends PatientEvent {
     String name
 
@@ -61,6 +67,7 @@ class PatientNameChanged extends PatientEvent {
 /**
  * Indicates the name changed for a patient
  */
+@com.github.rahulsom.es4g.annotations.Event(PatientAggregate)
 class PatientProcedurePerformed extends PatientEvent {
     String code
 
@@ -71,6 +78,7 @@ class PatientProcedurePerformed extends PatientEvent {
 /**
  * Indicates the name changed for a patient
  */
+@com.github.rahulsom.es4g.annotations.Event(PatientAggregate)
 class PatientProcedurePlanned extends PatientEvent {
     String code
 
@@ -81,6 +89,7 @@ class PatientProcedurePlanned extends PatientEvent {
 /**
  * Indicates the name changed for a patient
  */
+@com.github.rahulsom.es4g.annotations.Event(PatientAggregate)
 class PatientDeleted extends PatientEvent {
     String reason
 
@@ -91,6 +100,7 @@ class PatientDeleted extends PatientEvent {
 /**
  * Indicates an event has been reverted
  */
+@com.github.rahulsom.es4g.annotations.Event(PatientAggregate)
 class PatientEventReverted extends PatientEvent implements RevertEvent<PatientAggregate> {
     PatientEvent event
 
@@ -101,6 +111,7 @@ class PatientEventReverted extends PatientEvent implements RevertEvent<PatientAg
 /**
  * Indicates current patient deprecates another patient
  */
+@com.github.rahulsom.es4g.annotations.Event(PatientAggregate)
 class PatientDeprecates extends PatientEvent implements Deprecates<PatientAggregate> {
     PatientAggregate deprecated
 
@@ -115,6 +126,7 @@ class PatientDeprecates extends PatientEvent implements Deprecates<PatientAggreg
 /**
  * Indicates current patient is deprecated by new Patient
  */
+@com.github.rahulsom.es4g.annotations.Event(PatientAggregate)
 class PatientDeprecatedBy extends PatientEvent implements DeprecatedBy<PatientAggregate> {
     PatientAggregate deprecator
 
