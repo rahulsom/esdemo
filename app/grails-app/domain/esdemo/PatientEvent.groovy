@@ -2,7 +2,7 @@ package esdemo
 
 import com.github.rahulsom.es4g.api.DeprecatedBy
 import com.github.rahulsom.es4g.api.Deprecates
-import com.github.rahulsom.es4g.api.Event
+import com.github.rahulsom.es4g.api.BaseEvent
 import com.github.rahulsom.es4g.api.RevertEvent
 import groovy.json.JsonBuilder
 
@@ -15,7 +15,7 @@ import groovy.json.JsonBuilder
  * @author Rahul Somasunderam
  */
 //tag::main[]
-abstract class PatientEvent implements Event<PatientAggregate> {
+abstract class PatientEvent implements BaseEvent<PatientAggregate> {
     static belongsTo = [
             aggregate: PatientAggregate
     ]

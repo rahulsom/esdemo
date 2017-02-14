@@ -1,9 +1,12 @@
 package com.github.rahulsom.es4g.api
 
 /**
- * Created by rahul on 2/11/17.
+ * Marks a class as a snapshot
+ * @param <A> The Aggregate this snapshot works over
+ *
+ * @author Rahul Somasunderam
  */
-interface Snapshot<A extends Aggregate> {
+interface Snapshot<A extends AggregateType> {
     Long getId()
 
     A getAggregate()

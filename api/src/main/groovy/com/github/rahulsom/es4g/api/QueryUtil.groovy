@@ -7,7 +7,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 @CompileStatic
-trait QueryUtil<A extends Aggregate, E extends Event<A>, S extends Snapshot<A>> {
+trait QueryUtil<A extends AggregateType, E extends BaseEvent<A>, S extends Snapshot<A>> {
     private Logger log = LoggerFactory.getLogger(getClass())
 
     abstract S createEmptySnapshot()

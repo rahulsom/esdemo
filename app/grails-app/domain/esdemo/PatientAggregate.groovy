@@ -1,6 +1,7 @@
 package esdemo
 
 import com.github.rahulsom.es4g.annotations.Aggregate
+import com.github.rahulsom.es4g.api.AggregateType
 
 /**
  * An aggregate is somewhat of a primary key in an Event Sourcing System
@@ -11,7 +12,7 @@ import com.github.rahulsom.es4g.annotations.Aggregate
  */
 //tag::main[]
 @Aggregate
-class PatientAggregate implements com.github.rahulsom.es4g.api.Aggregate {
+class PatientAggregate implements AggregateType {
     String identifier
     String authority
 

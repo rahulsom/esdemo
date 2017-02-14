@@ -44,8 +44,8 @@ class EventASTTransformation extends AbstractASTTransformation {
                     ACC_PUBLIC | ACC_ABSTRACT,
                     make(EventApplyOutcome),
                     [
-                            new Parameter(new ClassNode(theClassNode.name, ACC_PUBLIC, make(Object)), 'event'),
-                            new Parameter(new ClassNode('S', ACC_PUBLIC, make(Object)), 'snapshot')
+                            new Parameter(make(theClassNode.name), 'event'),
+                            new Parameter(make(AggregateASTTransformation.SNAPSHOT_PLACEHOLDER), 'snapshot')
                     ] as Parameter[],
                     new ClassNode[0],
                     null)
