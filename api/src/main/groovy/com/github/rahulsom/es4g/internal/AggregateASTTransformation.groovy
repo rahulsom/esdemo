@@ -9,6 +9,7 @@ import org.codehaus.groovy.control.SourceUnit
 import org.codehaus.groovy.transform.AbstractASTTransformation
 import org.codehaus.groovy.transform.GroovyASTTransformation
 
+import static com.github.rahulsom.es4g.internal.AstUtils.replaceGenericsPlaceholders
 import static org.codehaus.groovy.ast.ClassHelper.make
 
 /**
@@ -42,19 +43,23 @@ class AggregateASTTransformation extends AbstractASTTransformation {
     }
 
     static ClassNode createInterface(String parentClass) {
-        GenericsType genericsType = createGenericsType()
+        GenericsType genericsType = createGenericsType(make(parentClass))
 
         def queryInterfaceNode = new ClassNode(
-                "${parentClass}\$Query", ACC_PUBLIC | ACC_INTERFACE | ACC_ABSTRACT , make(Object)
+                "${parentClass}_Query", ACC_PUBLIC | ACC_INTERFACE | ACC_ABSTRACT, make(Object)
         )
         queryInterfaceNode.setGenericsTypes([genericsType] as GenericsType[])
         queryInterfaceNode
     }
 
-    static GenericsType createGenericsType() {
+    static GenericsType createGenericsType(ClassNode aggregate) {
         ClassNode genericTypeForInterface = make(SNAPSHOT_PLACEHOLDER)
-        def genericsType = new GenericsType(genericTypeForInterface, [make(Snapshot)] as ClassNode[], make(Object))
-        genericsType.setPlaceholder(true)
+//        genericTypeForInterface.genericsPlaceHolder = true
+
+        def genericsType = new GenericsType(
+                replaceGenericsPlaceholders(genericTypeForInterface, [A: aggregate]),
+                [make(Snapshot)] as ClassNode[], make(Object))
+        genericsType.placeholder = true
         genericsType
     }
 
