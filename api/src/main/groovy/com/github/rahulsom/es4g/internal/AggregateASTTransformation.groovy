@@ -30,34 +30,34 @@ class AggregateASTTransformation extends AbstractASTTransformation {
 
     @Override
     void visit(ASTNode[] nodes, SourceUnit source) {
-        AnnotatedNode annotatedNode = (AnnotatedNode) nodes[1]
-        AnnotationNode annotationNode = (AnnotationNode) nodes[0]
+        AnnotatedNode annotatedNode = nodes[1] as AnnotatedNode
+        AnnotationNode annotationNode = nodes[0] as AnnotationNode
 
         if (MY_TYPE == annotationNode.classNode && annotatedNode instanceof ClassNode) {
             def theClassNode = annotatedNode as ClassNode
-            log.warning("[Aggregate] Adding interface \$Query to ${theClassNode.name}")
+            log.warning "[Aggregate] Creating interface ${theClassNode.name}_Query"
             ClassNode queryInterfaceNode = createInterface(theClassNode.name)
             theClassNode.module.addClass(queryInterfaceNode)
             interfaces[theClassNode.name] = queryInterfaceNode
         }
     }
 
-    static ClassNode createInterface(String parentClass) {
-        GenericsType genericsType = createGenericsType(make(parentClass))
+    static ClassNode createInterface(String aggregateClass) {
+        GenericsType genericsType = createGenericsType(make(aggregateClass))
 
         def queryInterfaceNode = new ClassNode(
-                "${parentClass}_Query", ACC_PUBLIC | ACC_INTERFACE | ACC_ABSTRACT, make(Object)
+                "${aggregateClass}_Query", ACC_PUBLIC | ACC_INTERFACE | ACC_ABSTRACT, make(Object)
         )
         queryInterfaceNode.setGenericsTypes([genericsType] as GenericsType[])
         queryInterfaceNode
     }
 
-    static GenericsType createGenericsType(ClassNode aggregate) {
+    private static GenericsType createGenericsType(ClassNode aggregate) {
         ClassNode genericTypeForInterface = make(SNAPSHOT_PLACEHOLDER)
-//        genericTypeForInterface.genericsPlaceHolder = true
+        genericTypeForInterface.genericsPlaceHolder = true
 
         def genericsType = new GenericsType(
-                replaceGenericsPlaceholders(genericTypeForInterface, [A: aggregate]),
+                replaceGenericsPlaceholders(genericTypeForInterface, A: aggregate),
                 [make(Snapshot)] as ClassNode[], make(Object))
         genericsType.placeholder = true
         genericsType

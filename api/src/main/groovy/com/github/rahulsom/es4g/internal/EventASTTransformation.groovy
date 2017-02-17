@@ -14,6 +14,7 @@ import org.codehaus.groovy.control.SourceUnit
 import org.codehaus.groovy.transform.AbstractASTTransformation
 import org.codehaus.groovy.transform.GroovyASTTransformation
 
+import static com.github.rahulsom.es4g.internal.AggregateASTTransformation.SNAPSHOT_PLACEHOLDER
 import static org.codehaus.groovy.ast.ClassHelper.make
 
 /**
@@ -31,13 +32,13 @@ class EventASTTransformation extends AbstractASTTransformation {
 
     @Override
     void visit(ASTNode[] nodes, SourceUnit source) {
-        AnnotatedNode annotatedNode = (AnnotatedNode) nodes[1]
-        AnnotationNode annotationNode = (AnnotationNode) nodes[0]
+        AnnotatedNode annotatedNode = nodes[1] as AnnotatedNode
+        AnnotationNode annotationNode = nodes[0] as AnnotationNode
 
         if (MY_TYPE == annotationNode.classNode && annotatedNode instanceof ClassNode) {
             def theAggregate = annotationNode.getMember('value')
             def theClassNode = annotatedNode as ClassNode
-            log.warning("[Event    ] Adding apply${theClassNode.nameWithoutPackage} to interface ${theAggregate.type.name}\$Query")
+            log.warning "[Event    ] Adding apply${theClassNode.nameWithoutPackage} to interface ${theAggregate.type.name}\$Query"
             def queryInterfaceNode = AggregateASTTransformation.interfaces[theAggregate.type.name]
 
             queryInterfaceNode.addMethod("apply${theClassNode.nameWithoutPackage}",
@@ -45,7 +46,7 @@ class EventASTTransformation extends AbstractASTTransformation {
                     make(EventApplyOutcome),
                     [
                             new Parameter(make(theClassNode.name), 'event'),
-                            new Parameter(make(AggregateASTTransformation.SNAPSHOT_PLACEHOLDER), 'snapshot')
+                            new Parameter(make(SNAPSHOT_PLACEHOLDER), 'snapshot')
                     ] as Parameter[],
                     new ClassNode[0],
                     null)

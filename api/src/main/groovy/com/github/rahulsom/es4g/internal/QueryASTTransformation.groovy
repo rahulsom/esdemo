@@ -29,20 +29,18 @@ class QueryASTTransformation extends AbstractASTTransformation {
 
     @Override
     void visit(ASTNode[] nodes, SourceUnit source) {
-        AnnotatedNode annotatedNode = (AnnotatedNode) nodes[1]
-        AnnotationNode annotationNode = (AnnotationNode) nodes[0]
+        AnnotatedNode annotatedNode = nodes[1] as AnnotatedNode
+        AnnotationNode annotationNode = nodes[0] as AnnotationNode
 
         if (MY_TYPE == annotationNode.classNode && annotatedNode instanceof ClassNode) {
             def theSnapshot = annotationNode.getMember('snapshot')
             def theAggregate = annotationNode.getMember('aggregate')
             def theClassNode = annotatedNode as ClassNode
-            log.warning("[Query    ] Adding interface ${theAggregate.type.name}\$Query to ${theClassNode.name}")
+            log.warning "[Query    ] Adding interface ${theAggregate.type.name}_Query to ${theClassNode.name}"
 
             def queryInterfaceNode = AggregateASTTransformation.createInterface(theAggregate.type.name)
 
-//            theClassNode.addInterface(
-//                    replaceGenericsPlaceholders(queryInterfaceNode, ['S': make(theSnapshot.type.name)])
-//            )
+            // theClassNode.addInterface replaceGenericsPlaceholders(queryInterfaceNode, 'S': theSnapshot.type)
         }
     }
 

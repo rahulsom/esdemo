@@ -4,20 +4,19 @@ import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.GenericsType
 
 import static org.codehaus.groovy.ast.ClassHelper.make
-import static org.codehaus.groovy.ast.ClassHelper.make
 
 /**
  * Created by rahul on 2/14/17.
  */
 class AstUtils {
-    static ClassNode replaceGenericsPlaceholders(ClassNode type, Map<String, ClassNode> genericsPlaceholders) {
-        return replaceGenericsPlaceholders(type, genericsPlaceholders, null)
+    static ClassNode replaceGenericsPlaceholders(Map<String, ClassNode> genericsPlaceholders, ClassNode type) {
+        return replaceGenericsPlaceholders(genericsPlaceholders, type, null)
     }
 
     static ClassNode replaceGenericsPlaceholders(
-            ClassNode type, Map<String, ClassNode> genericsPlaceholders, ClassNode defaultPlaceholder) {
+            Map<String, ClassNode> genericsPlaceholders, ClassNode type, ClassNode defaultPlaceholder) {
         if (type.isArray()) {
-            return replaceGenericsPlaceholders(type.getComponentType(), genericsPlaceholders).makeArray()
+            return replaceGenericsPlaceholders(genericsPlaceholders, type.getComponentType()).makeArray()
         }
 
         if (!type.isUsingGenerics() && !type.isRedirectNode()) {
@@ -61,7 +60,7 @@ class AstUtils {
                             }
                         } else {
                             copiedGenericsType = new GenericsType(
-                                    replaceGenericsPlaceholders(parametrizedType.getType(), genericsPlaceholders))
+                                    replaceGenericsPlaceholders(genericsPlaceholders, parametrizedType.getType()))
                         }
                         copiedGenericsTypes[i] = copiedGenericsType
                     }
