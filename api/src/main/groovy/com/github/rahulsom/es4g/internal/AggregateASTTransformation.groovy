@@ -1,15 +1,16 @@
 package com.github.rahulsom.es4g.internal
 
 import com.github.rahulsom.es4g.annotations.Aggregate
-import com.github.rahulsom.es4g.api.Snapshot
 import groovy.transform.CompileStatic
 import groovy.util.logging.Log
-import org.codehaus.groovy.ast.*
+import org.codehaus.groovy.ast.ASTNode
+import org.codehaus.groovy.ast.AnnotatedNode
+import org.codehaus.groovy.ast.AnnotationNode
+import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.control.SourceUnit
 import org.codehaus.groovy.transform.AbstractASTTransformation
 import org.codehaus.groovy.transform.GroovyASTTransformation
 
-import static com.github.rahulsom.es4g.internal.AstUtils.replaceGenericsPlaceholders
 import static org.codehaus.groovy.ast.ClassHelper.make
 
 /**
@@ -25,42 +26,33 @@ class AggregateASTTransformation extends AbstractASTTransformation {
 
     private static final Class<Aggregate> MY_CLASS = Aggregate.class
     private static final ClassNode MY_TYPE = make(MY_CLASS)
-    static final Map<String, ClassNode> interfaces = [:]
-    public static final String SNAPSHOT_PLACEHOLDER = 'S'
+    static final Map<String, List<ClassNode>> eventsForAggregate = [:]
 
     @Override
     void visit(ASTNode[] nodes, SourceUnit source) {
+        init(nodes, source)
         AnnotatedNode annotatedNode = nodes[1] as AnnotatedNode
         AnnotationNode annotationNode = nodes[0] as AnnotationNode
 
         if (MY_TYPE == annotationNode.classNode && annotatedNode instanceof ClassNode) {
             def theClassNode = annotatedNode as ClassNode
             log.warning "[Aggregate] Creating interface ${theClassNode.name}_Query"
-            ClassNode queryInterfaceNode = createInterface(theClassNode.name)
-            theClassNode.module.addClass(queryInterfaceNode)
-            interfaces[theClassNode.name] = queryInterfaceNode
+            getEventsForAggregate(theClassNode.name)
         }
     }
 
-    static ClassNode createInterface(String aggregateClass) {
-        GenericsType genericsType = createGenericsType(make(aggregateClass))
-
-        def queryInterfaceNode = new ClassNode(
-                "${aggregateClass}_Query", ACC_PUBLIC | ACC_INTERFACE | ACC_ABSTRACT, make(Object)
-        )
-        queryInterfaceNode.setGenericsTypes([genericsType] as GenericsType[])
-        queryInterfaceNode
+    static void addEventToAggregate(String aggregate, ClassNode event) {
+        if (!eventsForAggregate.containsKey(aggregate)) {
+            eventsForAggregate[aggregate] = []
+        }
+        eventsForAggregate[aggregate] << event
     }
 
-    private static GenericsType createGenericsType(ClassNode aggregate) {
-        ClassNode genericTypeForInterface = make(SNAPSHOT_PLACEHOLDER)
-        genericTypeForInterface.genericsPlaceHolder = true
-
-        def genericsType = new GenericsType(
-                replaceGenericsPlaceholders(genericTypeForInterface, A: aggregate),
-                [make(Snapshot)] as ClassNode[], make(Object))
-        genericsType.placeholder = true
-        genericsType
+    static List<ClassNode> getEventsForAggregate(String aggregate) {
+        if (!eventsForAggregate.containsKey(aggregate)) {
+            eventsForAggregate[aggregate] = []
+        }
+        eventsForAggregate[aggregate]
     }
 
 }

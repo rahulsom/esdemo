@@ -1,17 +1,14 @@
 package com.github.rahulsom.es4g.internal
 
 import com.github.rahulsom.es4g.annotations.Query
+import com.github.rahulsom.es4g.api.EventApplyOutcome
 import groovy.transform.CompileStatic
 import groovy.util.logging.Log
-import org.codehaus.groovy.ast.ASTNode
-import org.codehaus.groovy.ast.AnnotatedNode
-import org.codehaus.groovy.ast.AnnotationNode
-import org.codehaus.groovy.ast.ClassNode
+import org.codehaus.groovy.ast.*
 import org.codehaus.groovy.control.SourceUnit
 import org.codehaus.groovy.transform.AbstractASTTransformation
 import org.codehaus.groovy.transform.GroovyASTTransformation
 
-import static com.github.rahulsom.es4g.internal.AstUtils.replaceGenericsPlaceholders
 import static org.codehaus.groovy.ast.ClassHelper.make
 
 /**
@@ -27,8 +24,27 @@ class QueryASTTransformation extends AbstractASTTransformation {
     private static final Class<Query> MY_CLASS = Query.class
     private static final ClassNode MY_TYPE = make(MY_CLASS)
 
+    static String describeMethod(MethodNode methodNode, ClassNode snapshotType = null) {
+        def params = methodNode.parameters.toList().
+                collect {
+                    log.warning "it -> ${it.type.name} ${it.type.genericsPlaceHolder}"
+                    "${it.type.name == 'S' ? snapshotType.name : it.type.name} ${it.name}"
+                }.
+                join(', ')
+        "${methodNode.returnType.name} ${methodNode.name}(${params})"
+    }
+
+    private static <A, B> List<Tuple2<A, B>> zip(List<A> a, List<B> b) {
+        def result = []
+        a.eachWithIndex { v, idx ->
+            result << new Tuple2(v, b[idx])
+        }
+        result
+    }
+
     @Override
     void visit(ASTNode[] nodes, SourceUnit source) {
+        init(nodes, source);
         AnnotatedNode annotatedNode = nodes[1] as AnnotatedNode
         AnnotationNode annotationNode = nodes[0] as AnnotationNode
 
@@ -36,11 +52,32 @@ class QueryASTTransformation extends AbstractASTTransformation {
             def theSnapshot = annotationNode.getMember('snapshot')
             def theAggregate = annotationNode.getMember('aggregate')
             def theClassNode = annotatedNode as ClassNode
-            log.warning "[Query    ] Adding interface ${theAggregate.type.name}_Query to ${theClassNode.name}"
+            log.warning "[Query    ] Checking ${theClassNode.nameWithoutPackage} for methods"
+            def eventClasses = AggregateASTTransformation.getEventsForAggregate(theAggregate.type.name)
 
-            def queryInterfaceNode = AggregateASTTransformation.createInterface(theAggregate.type.name)
+            eventClasses.each { eventClass ->
+                def methodName = "apply${eventClass.nameWithoutPackage}"
+                log.warning "[Query    ]   -> Checking for ${methodName}"
 
-            // theClassNode.addInterface replaceGenericsPlaceholders(queryInterfaceNode, 'S': theSnapshot.type)
+                def methodsByName = theClassNode.methods.
+                        findAll { it.name == methodName.toString() }
+
+                def methodSignature = "${make(EventApplyOutcome).name} $methodName(${eventClass.name} event, ${theSnapshot.type.name} snapshot)"
+
+                if (methodsByName.size() == 0) {
+                    addError("Missing expected method $methodSignature", annotationNode)
+                } else {
+                    def matchingMethod = methodsByName.find { implMethod ->
+                        implMethod.parameters?.length == 2 &&
+                                implMethod.parameters[0].type.name == eventClass.name &&
+                                implMethod.parameters[1].type.name == theSnapshot.type.name
+                    }
+                    if (!matchingMethod) {
+                        addError("Missing expected method ${methodSignature}", annotationNode)
+                    }
+                }
+            }
+
         }
     }
 
