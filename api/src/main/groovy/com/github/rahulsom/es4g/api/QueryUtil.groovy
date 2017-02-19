@@ -60,10 +60,10 @@ trait QueryUtil<A extends AggregateType, E extends BaseEvent<A>, S extends Snaps
         if (head instanceof RevertEvent<A>) {
             def revert = head as RevertEvent<A>
             if (!tail.contains(revert.revertedEvent)) {
-                throw new Exception("Cannot revert event that does not exist in unapplied list - ${revert.revertedEvent.id}")
+                throw new Exception("Cannot revert event that does not exist in unapplied list - ${revert.revertedEvent}")
             }
             log.debug "    --> Revert: $revert"
-            revert.revertedEvent.revertedBy = revert.id
+            revert.revertedEvent.revertedBy = revert
             return applyReverts(tail.findAll { it != revert.revertedEvent }, accumulator)
         } else {
             return applyReverts(tail, accumulator + head)

@@ -16,9 +16,9 @@ interface BaseEvent<A extends AggregateType> {
 
     String getCreatedBy()
 
-    Long getRevertedBy()
+    BaseEvent<A> getRevertedBy()
 
-    void setRevertedBy(Long revertEventId)
+    void setRevertedBy(BaseEvent<A> revertEvent)
 
     Long getId()
 }

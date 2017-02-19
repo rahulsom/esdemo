@@ -34,7 +34,7 @@ abstract class PatientEvent implements BaseEvent<PatientAggregate> {
 //tag::close[]
     String createdBy
 
-    Long revertedBy
+    BaseEvent<PatientAggregate> revertedBy
     static transients = ['revertedBy']
 }
 //end::close[]
