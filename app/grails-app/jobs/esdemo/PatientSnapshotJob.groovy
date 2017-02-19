@@ -11,7 +11,7 @@ class PatientSnapshotJob {
         def threshold = lastEventDate
         log.debug "Threshold is $threshold"
         List<PatientEvent> events = lastEventDate ?
-                PatientEvent.findAllByDateCreatedGreaterThan(lastEventDate) :
+                PatientEvent.findAllByDateGreaterThan(lastEventDate) :
                 PatientEvent.list()
         log.debug "Aggregating ${events.size()} events"
         def aggregates = events*.aggregate.unique()
@@ -24,7 +24,7 @@ class PatientSnapshotJob {
             }
         }
         if (events) {
-            def maxTime = events.dateCreated*.time.max()
+            def maxTime = events.date*.time.max()
             new File('build/date.txt').text = maxTime
             log.info "Done computing snapshots for ${aggregates.size()} aggregates. Last Event was ${new Date(maxTime)}."
         } else {

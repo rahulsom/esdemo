@@ -12,7 +12,7 @@ interface BaseEvent<A extends AggregateType> {
 
     abstract String getAudit()
 
-    Date getDateCreated()
+    Date getDate()
 
     String getCreatedBy()
 

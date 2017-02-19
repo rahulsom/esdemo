@@ -130,7 +130,7 @@ trait QueryUtil<A extends AggregateType, E extends BaseEvent<A>, S extends Snaps
 
             def sortedEvents = allEvents.
                     findAll { it.id != deprecatesEvent.id && it.id != deprecatesEvent.converse.id }.
-                    toSorted { a, b -> (a.dateCreated.time - b.dateCreated.time) as int }
+                    toSorted { a, b -> (a.date.time - b.date.time) as int }
 
             log.info "Sorted Events: [\n    ${sortedEvents.join(',\n    ')}\n]"
 

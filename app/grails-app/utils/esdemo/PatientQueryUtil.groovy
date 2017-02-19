@@ -67,7 +67,7 @@ class PatientQueryUtil implements QueryUtil<PatientAggregate, PatientEvent, Pati
     EventApplyOutcome applyPatientProcedurePlanned(PatientProcedurePlanned planned, PatientSnapshot snapshot) {
         def match = snapshot.plannedProcedures?.find { it.code == planned.code }
         if (!match) {
-            snapshot.addToPlannedProcedures(code: planned.code, datePlanned: planned.dateCreated)
+            snapshot.addToPlannedProcedures(code: planned.code, datePlanned: planned.date)
         }
         CONTINUE
     }
@@ -77,7 +77,7 @@ class PatientQueryUtil implements QueryUtil<PatientAggregate, PatientEvent, Pati
         if (match) {
             snapshot.removeFromPlannedProcedures(match)
         }
-        snapshot.addToPerformedProcedures(code: performed.code, datePerformed: performed.dateCreated)
+        snapshot.addToPerformedProcedures(code: performed.code, datePerformed: performed.date)
         CONTINUE
     }
 

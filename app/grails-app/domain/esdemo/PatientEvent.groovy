@@ -25,7 +25,7 @@ abstract class PatientEvent implements BaseEvent<PatientAggregate> {
      * This says when the event was performed. It's a grails magic field and doesn't need to be populated manually
      */
 //tag::date[]
-    Date dateCreated
+    Date date
 //end::date[]
 
     /**
@@ -49,7 +49,7 @@ abstract class PatientEvent implements BaseEvent<PatientAggregate> {
 class PatientCreated extends PatientEvent {
     String name
 
-    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} created $aggregate with name $name" }
+    @Override String toString() { "<$id> ${date}: ${createdBy} created $aggregate with name $name" }
     @Override String getAudit() { new JsonBuilder([name: name]).toString() }
 }
 //end::created[]
@@ -61,7 +61,7 @@ class PatientCreated extends PatientEvent {
 class PatientNameChanged extends PatientEvent {
     String name
 
-    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} changed name on $aggregate to ${name}" }
+    @Override String toString() { "<$id> ${date}: ${createdBy} changed name on $aggregate to ${name}" }
     @Override String getAudit() { new JsonBuilder([name: name]).toString() }
 }
 
@@ -72,7 +72,7 @@ class PatientNameChanged extends PatientEvent {
 class PatientProcedurePerformed extends PatientEvent {
     String code
 
-    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} performed ${code} on $aggregate" }
+    @Override String toString() { "<$id> ${date}: ${createdBy} performed ${code} on $aggregate" }
     @Override String getAudit() { new JsonBuilder([code: code]).toString() }
 }
 
@@ -83,7 +83,7 @@ class PatientProcedurePerformed extends PatientEvent {
 class PatientProcedurePlanned extends PatientEvent {
     String code
 
-    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} planned ${code} for $aggregate" }
+    @Override String toString() { "<$id> ${date}: ${createdBy} planned ${code} for $aggregate" }
     @Override String getAudit() { new JsonBuilder([code: code]).toString() }
 }
 
@@ -94,7 +94,7 @@ class PatientProcedurePlanned extends PatientEvent {
 class PatientDeleted extends PatientEvent {
     String reason
 
-    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} deleted $aggregate for reason '$reason'" }
+    @Override String toString() { "<$id> ${date}: ${createdBy} deleted $aggregate for reason '$reason'" }
     @Override String getAudit() { new JsonBuilder([reason: reason]).toString() }
 }
 
@@ -105,7 +105,7 @@ class PatientDeleted extends PatientEvent {
 class PatientEventReverted extends PatientEvent implements RevertEvent<PatientAggregate> {
     PatientEvent revertedEvent
 
-    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} reverted [$revertedEvent]" }
+    @Override String toString() { "<$id> ${date}: ${createdBy} reverted [$revertedEvent]" }
     @Override String getAudit() { new JsonBuilder([eventId: revertedEvent.id, id: id]).toString() }
 }
 
@@ -116,7 +116,7 @@ class PatientEventReverted extends PatientEvent implements RevertEvent<PatientAg
 class PatientDeprecates extends PatientEvent implements Deprecates<PatientAggregate> {
     PatientAggregate deprecated
 
-    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} merged [$deprecated] into this." }
+    @Override String toString() { "<$id> ${date}: ${createdBy} merged [$deprecated] into this." }
     @Override String getAudit() { new JsonBuilder([deprecated: deprecated.toString()]).toString() }
 
     static hasOne = [
@@ -131,7 +131,7 @@ class PatientDeprecates extends PatientEvent implements Deprecates<PatientAggreg
 class PatientDeprecatedBy extends PatientEvent implements DeprecatedBy<PatientAggregate> {
     PatientAggregate deprecator
 
-    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} merged into [$deprecator]" }
+    @Override String toString() { "<$id> ${date}: ${createdBy} merged into [$deprecator]" }
     @Override String getAudit() { new JsonBuilder([deprecator: deprecator.toString()]).toString() }
 
     static belongsTo = [
