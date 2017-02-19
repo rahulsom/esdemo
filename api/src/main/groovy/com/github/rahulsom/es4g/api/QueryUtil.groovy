@@ -91,9 +91,9 @@ trait QueryUtil<A extends AggregateType, E extends BaseEvent<A>, S extends Snaps
                 log.info "Uncomputed reverts exist: ${uncomputedEvents}"
                 getSnapshotAndEventsSince(aggregate, 0, lastEvent)
             } else {
-                log.info "Events in pair: ${uncomputedEvents*.id}"
+                log.info "Events in pair: ${uncomputedEvents*.position}"
                 if (uncomputedEvents) {
-                    lastSnapshot.lastEvent = uncomputedEvents*.id.max()
+                    lastSnapshot.lastEvent = uncomputedEvents*.position.max()
                 }
                 new Tuple2(lastSnapshot, uncomputedEvents)
             }
@@ -102,9 +102,9 @@ trait QueryUtil<A extends AggregateType, E extends BaseEvent<A>, S extends Snaps
 
             List<E> uncomputedEvents = getUncomputedEvents(aggregate, lastSnapshot, lastEvent)
 
-            log.info "Events in pair: ${uncomputedEvents*.id}"
+            log.info "Events in pair: ${uncomputedEvents*.position}"
             if (uncomputedEvents) {
-                lastSnapshot.lastEvent = uncomputedEvents*.id.max()
+                lastSnapshot.lastEvent = uncomputedEvents*.position.max()
             }
             new Tuple2(lastSnapshot, uncomputedEvents)
         }

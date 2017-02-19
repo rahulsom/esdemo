@@ -50,7 +50,7 @@ class PatientQueryUtil implements QueryUtil<PatientAggregate, PatientEvent, Pati
     @Override
     List<PatientEvent> getUncomputedEvents(PatientAggregate aggregate, PatientSnapshot lastSnapshot, long lastEvent) {
         PatientEvent.
-                findAllByAggregateAndIdGreaterThanAndIdLessThanEquals(
+                findAllByAggregateAndPositionGreaterThanAndPositionLessThanEquals(
                         aggregate, lastSnapshot?.lastEvent ?: 0L, lastEvent, INCREMENTAL)
     }
 

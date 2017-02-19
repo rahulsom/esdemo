@@ -29,6 +29,13 @@ abstract class PatientEvent implements BaseEvent<PatientAggregate> {
 //end::date[]
 
     /**
+     * This represents the position of the event
+     */
+//tag::date[]
+    Long position
+//end::date[]
+
+    /**
      * This says who performed the event. It goes along with `dateCreated`, but needs to be specified.
      */
 //tag::close[]

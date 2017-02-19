@@ -153,7 +153,7 @@ class PatientQueryUtilSpec extends Specification {
         s2 = patientQueryUtil.findPatient '123', '1.2.3.4', Long.MAX_VALUE
 
         then: "The snapshot should have the correct last event"
-        s2.lastEvent == lastEvent.id
+        s2.lastEvent == lastEvent.position
     }
 
     def "Merge can be read correctly"() {

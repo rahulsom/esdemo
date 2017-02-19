@@ -20,7 +20,9 @@ interface BaseEvent<A extends AggregateType> {
 
     void setRevertedBy(BaseEvent<A> revertEvent)
 
-    Long getId()
+    public <T extends Object> T getId()
+
+    Long getPosition()
 }
 
 
