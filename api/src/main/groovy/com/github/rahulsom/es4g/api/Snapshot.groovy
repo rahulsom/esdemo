@@ -7,8 +7,6 @@ package com.github.rahulsom.es4g.api
  * @author Rahul Somasunderam
  */
 interface Snapshot<A extends AggregateType> {
-    Long getId()
-
     A getAggregate()
 
     void setAggregate(A aggregate)

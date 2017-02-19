@@ -35,7 +35,7 @@ trait QueryUtil<A extends AggregateType, E extends BaseEvent<A>, S extends Snaps
     private S getLatestSnapshot(A aggregate, long startWithEvent) {
         S lastSnapshot = getSnapshot(startWithEvent, aggregate).orElse(createEmptySnapshot()) as S
 
-        log.info "    --> Last Snapshot: ${lastSnapshot.id ? lastSnapshot : '<none>'}"
+        log.info "    --> Last Snapshot: ${lastSnapshot.lastEvent ? lastSnapshot : '<none>'}"
         detachSnapshot(lastSnapshot)
 
         lastSnapshot.aggregate = aggregate
