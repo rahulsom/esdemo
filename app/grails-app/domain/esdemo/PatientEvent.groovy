@@ -103,10 +103,10 @@ class PatientDeleted extends PatientEvent {
  */
 // @Event(PatientAggregate)
 class PatientEventReverted extends PatientEvent implements RevertEvent<PatientAggregate> {
-    PatientEvent event
+    PatientEvent revertedEvent
 
-    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} reverted [$event]" }
-    @Override String getAudit() { new JsonBuilder([eventId: event.id, id: id]).toString() }
+    @Override String toString() { "<$id> ${dateCreated}: ${createdBy} reverted [$revertedEvent]" }
+    @Override String getAudit() { new JsonBuilder([eventId: revertedEvent.id, id: id]).toString() }
 }
 
 /**

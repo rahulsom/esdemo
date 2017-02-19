@@ -54,7 +54,7 @@ class PatientController {
         log.error "Events: $events"
         events.each { event ->
             if (event instanceof PatientEventReverted && event.revertedBy == null) {
-                (event as PatientEventReverted).event.revertedBy = event.id
+                (event as PatientEventReverted).revertedEvent.revertedBy = event.id
             }
         }
         def snapshots = PatientSnapshot.findAllByAggregateAndLastEventLessThanEquals(

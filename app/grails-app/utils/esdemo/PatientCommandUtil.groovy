@@ -30,14 +30,14 @@ class PatientCommandUtil {
          * PatientDeprecatedBy and PatientDeprecates always work as a pair.
          */
         if (event instanceof PatientDeprecatedBy) {
-            new PatientEventReverted(aggregate: event.converse.aggregate, createdBy: Util.user, event: event.converse,
+            new PatientEventReverted(aggregate: event.converse.aggregate, createdBy: Util.user, revertedEvent: event.converse,
                     dateCreated: Util.time).save(failOnError: true)
         }
         if (event instanceof PatientDeprecates) {
-            new PatientEventReverted(aggregate: event.converse.aggregate, createdBy: Util.user, event: event.converse,
+            new PatientEventReverted(aggregate: event.converse.aggregate, createdBy: Util.user, revertedEvent: event.converse,
                     dateCreated: Util.time).save(failOnError: true)
         }
-        new PatientEventReverted(aggregate: event.aggregate, createdBy: Util.user, event: event, dateCreated: Util.time).
+        new PatientEventReverted(aggregate: event.aggregate, createdBy: Util.user, revertedEvent: event, dateCreated: Util.time).
                 save(failOnError: true)
     }
 
