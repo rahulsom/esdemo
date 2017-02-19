@@ -6,6 +6,15 @@ import groovy.transform.TypeCheckingMode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+/**
+ * A trait that simplifies computing snapshots from events
+ *
+ * @param <A> The Aggregate type
+ * @param <E> The Event type
+ * @param <S> The snapshot type
+ *
+ * @author Rahul Somasunderam
+ */
 @CompileStatic
 trait QueryUtil<A extends AggregateType, E extends BaseEvent<A>, S extends Snapshot<A>> {
     private Logger log = LoggerFactory.getLogger(getClass())
