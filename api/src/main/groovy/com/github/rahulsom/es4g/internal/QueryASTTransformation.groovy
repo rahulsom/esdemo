@@ -26,10 +26,7 @@ class QueryASTTransformation extends AbstractASTTransformation {
 
     static String describeMethod(MethodNode methodNode, ClassNode snapshotType = null) {
         def params = methodNode.parameters.toList().
-                collect {
-                    log.warning "it -> ${it.type.name} ${it.type.genericsPlaceHolder}"
-                    "${it.type.name == 'S' ? snapshotType.name : it.type.name} ${it.name}"
-                }.
+                collect { "${it.type.name == 'S' ? snapshotType.name : it.type.name} ${it.name}" }.
                 join(', ')
         "${methodNode.returnType.name} ${methodNode.name}(${params})"
     }
@@ -52,12 +49,12 @@ class QueryASTTransformation extends AbstractASTTransformation {
             def theSnapshot = annotationNode.getMember('snapshot')
             def theAggregate = annotationNode.getMember('aggregate')
             def theClassNode = annotatedNode as ClassNode
-            log.warning "Checking ${theClassNode.nameWithoutPackage} for methods"
+            log.fine "Checking ${theClassNode.nameWithoutPackage} for methods"
             def eventClasses = AggregateASTTransformation.getEventsForAggregate(theAggregate.type.name)
 
             eventClasses.each { eventClass ->
                 def methodName = "apply${eventClass.nameWithoutPackage}"
-                log.warning "  -> Checking for ${methodName}"
+                log.fine "  -> Checking for ${methodName}"
 
                 def methodsByName = theClassNode.methods.
                         findAll { it.name == methodName.toString() }

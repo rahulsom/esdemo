@@ -36,7 +36,7 @@ class AggregateASTTransformation extends AbstractASTTransformation {
 
         if (MY_TYPE == annotationNode.classNode && annotatedNode instanceof ClassNode) {
             def theClassNode = annotatedNode as ClassNode
-            log.warning "Creating interface ${theClassNode.name}_Query"
+            log.fine "Storing entry for aggregate ${theClassNode.name}"
             getEventsForAggregate(theClassNode.name)
         }
     }
