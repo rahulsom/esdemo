@@ -52,12 +52,12 @@ class QueryASTTransformation extends AbstractASTTransformation {
             def theSnapshot = annotationNode.getMember('snapshot')
             def theAggregate = annotationNode.getMember('aggregate')
             def theClassNode = annotatedNode as ClassNode
-            log.warning "[Query    ] Checking ${theClassNode.nameWithoutPackage} for methods"
+            log.warning "Checking ${theClassNode.nameWithoutPackage} for methods"
             def eventClasses = AggregateASTTransformation.getEventsForAggregate(theAggregate.type.name)
 
             eventClasses.each { eventClass ->
                 def methodName = "apply${eventClass.nameWithoutPackage}"
-                log.warning "[Query    ]   -> Checking for ${methodName}"
+                log.warning "  -> Checking for ${methodName}"
 
                 def methodsByName = theClassNode.methods.
                         findAll { it.name == methodName.toString() }
@@ -69,6 +69,7 @@ class QueryASTTransformation extends AbstractASTTransformation {
                 } else {
                     def matchingMethod = methodsByName.find { implMethod ->
                         implMethod.parameters?.length == 2 &&
+                                implMethod.returnType.name == 'com.github.rahulsom.es4g.api.EventApplyOutcome' &&
                                 implMethod.parameters[0].type.name == eventClass.name &&
                                 implMethod.parameters[1].type.name == theSnapshot.type.name
                     }

@@ -35,7 +35,7 @@ class EventASTTransformation extends AbstractASTTransformation {
         if (MY_TYPE == annotationNode.classNode && annotatedNode instanceof ClassNode) {
             def theAggregate = annotationNode.getMember('value')
             def theClassNode = annotatedNode as ClassNode
-            log.warning "[Event    ] Adding apply${theClassNode.nameWithoutPackage} to interface ${theAggregate.type.name}\$Query"
+            log.warning "Adding apply${theClassNode.nameWithoutPackage} to interface ${theAggregate.type.name}\$Query"
             AggregateASTTransformation.addEventToAggregate(theAggregate.type.name, theClassNode)
         }
     }
