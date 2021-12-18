@@ -1,6 +1,6 @@
 buildscript {
     dependencies {
-        classpath 'org.ysb33r.gradle:vfs-gradle-plugin:1.0-beta8'
+        classpath 'org.ysb33r.gradle:vfs-gradle-plugin:1.0.1'
         classpath 'commons-httpclient:commons-httpclient:3.1'
     }
 }
